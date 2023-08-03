@@ -10,12 +10,15 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    settingswindow.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
+    settingswindow.h \
     urlconnectserver.h
 
-FORMS +=
+FORMS += \
+    settingswindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

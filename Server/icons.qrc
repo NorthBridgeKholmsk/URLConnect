@@ -2,4 +2,7 @@
     <qresource prefix="/iconTray">
         <file>TrayIcon.ico</file>
     </qresource>
+    <qresource prefix="/iconSettings">
+        <file>findExe.png</file>
+    </qresource>
 </RCC>
