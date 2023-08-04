@@ -8,7 +8,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :QDialog(parent), ui(new Ui::Set
 
     //Получаем настройки из реестра
     getSettingsFromRegistr();
-
+    qInfo() << "Настройки сервера получены из реестра";
     //Подключаем кнопкам выбора файлов соответствующий вызов функции findExeFile
     connect(ui->sshFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->sshAppPath, "Выберите исполняемый файл PuTTY");});
     connect(ui->rdpFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->rdpAppPath, "Выберите исполняемый файл клиента RDP");});
@@ -30,6 +30,7 @@ SettingsWindow::~SettingsWindow(){
 //Обработчик клика по кнопке "Отменить"
 void SettingsWindow::on_cancelButton_clicked(){
     getSettingsFromRegistr();
+    qInfo() << "Окно настройки сервера закрыто без сохранения настроек";
     this->hide();
 }
 
@@ -75,10 +76,12 @@ void SettingsWindow::setSettingsToRegistr(){
         QSettings autorunSettings("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
         autorunSettings.setValue(QCoreApplication::applicationName(), QDir::toNativeSeparators(QCoreApplication::applicationFilePath()));
         autorunSettings.sync();
+        qInfo() << "Программа добавлена в автозагрузку Windows";
     }
     else{
         QSettings autorunSettings("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
         settings.remove(QCoreApplication::applicationName());
+        qWarning() << "Программа удалена из автозагрузки Windows";
     }
     settings.setValue("settings/port", ui->portLine->text().toInt());
     settings.setValue("settings/sshUseApp", ui->sshUseApp->currentText());
@@ -88,5 +91,6 @@ void SettingsWindow::setSettingsToRegistr(){
     settings.setValue("settings/winboxNewAppPath", ui->winboxNewAppPath->text());
     settings.setValue("settings/winboxOldAppPath", ui->winboxOldAppPath->text());
     settings.setValue("settings/ieAppPath", ui->ieAppPath->text());
+    qWarning() << "Окно настройки сервера закрыто с сохранением настроек. Настройки записаны в реестр";
 }
 

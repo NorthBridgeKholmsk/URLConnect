@@ -23,6 +23,7 @@ public slots:
 private:
     QMenu* trayIconMenu;
     QAction* openSettingsAction;
+    QAction* logAction;
     QAction* exitAction;
 
     SettingsWindow* settings = new SettingsWindow();
