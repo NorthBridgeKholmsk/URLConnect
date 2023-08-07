@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <QRegularExpression>
 #include "urlconnectserver.h"
+#include "localserver.h"
 
 //Обработчик вывода логов в файл
 void myMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg){
@@ -39,5 +40,6 @@ int main(int argc, char *argv[]){
     qInstallMessageHandler(myMessageHandler);
     qInfo() << "Запуск программы";
     URLConnectServer cs;
+    LocalServer ls("");
     return a.exec();
 }
