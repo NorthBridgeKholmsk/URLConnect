@@ -19,6 +19,7 @@ private:
     QLocalServer* localServer;
     QLocalSocket* localSocket;
     quint16 nextBlockSize;
+    QString host, protocol, idPass;
 };
 
 #endif // LOCALSERVER_H

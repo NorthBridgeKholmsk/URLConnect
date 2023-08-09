@@ -2,14 +2,19 @@
 #define PARSERURL_H
 
 #include <QObject>
+#include "../Logger/logger.h"
 
-class ParserURL : public QObject
-{
+class ParserURL : public QObject{
 public:
-    explicit ParserURL(QObject *parent = nullptr);
+    explicit ParserURL(const QString& arg, QObject *parent = nullptr);
+    QString getProtocol() const;
+    QString getHost() const;
+    QString getIdPass() const;
 
-signals:
-
+private:
+    QString protocol;
+    QString host;
+    QString idPass;
 };
 
 #endif // PARSERURL_H

@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QObject>
 #include "settingswindow.h"
+#include "../Logger/logger.h"
+#include "logviewer.h"
 
 class URLConnectServer : public QObject
 {

@@ -60,7 +60,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>7070</string>
+          <string>URLconnectServer</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -76,7 +76,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Используемый порт для связи с клиентом</string>
+          <string>Используемый идентификатор для связи с клиентом</string>
          </property>
         </widget>
        </item>

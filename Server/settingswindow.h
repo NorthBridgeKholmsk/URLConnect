@@ -6,6 +6,8 @@
 #include <QDir>
 #include <QLineEdit>
 #include <QFileDialog>
+#include <QRegularExpression>
+#include <QMessageBox>
 
 namespace Ui {
 class SettingsWindow;
@@ -29,6 +31,7 @@ public slots:
 private:
     void setSettingsToRegistr();
     void getSettingsFromRegistr();
+    bool validatorPath(QLineEdit* line);
     Ui::SettingsWindow *ui;
 };
 

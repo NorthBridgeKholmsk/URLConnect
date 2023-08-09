@@ -9,17 +9,22 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    ../Logger/logger.cpp \
     localserver.cpp \
+    logviewer.cpp \
     main.cpp \
     settingswindow.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
+    ../Logger/logger.h \
     localserver.h \
+    logviewer.h \
     settingswindow.h \
     urlconnectserver.h
 
 FORMS += \
+    logviewer.ui \
     settingswindow.ui
 
 # Default rules for deployment.

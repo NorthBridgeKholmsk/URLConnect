@@ -8,6 +8,7 @@ CONFIG -= app_bundle
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        ../Logger/logger.cpp \
         localclient.cpp \
         main.cpp \
         parserurl.cpp
@@ -18,5 +19,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    ../Logger/logger.h \
     localclient.h \
     parserurl.h

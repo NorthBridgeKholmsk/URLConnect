@@ -18,13 +18,12 @@ void LocalServer::slotNewConnection(){
     localSocket = localServer->nextPendingConnection();
     connect(localSocket, &QLocalSocket::disconnected, localSocket, &QLocalSocket::deleteLater);
     connect(localSocket, &QLocalSocket::readyRead, localSocket, [&](){slotReadClient();});
-    sendToClient(localSocket, "cnctTsrv1");
 }
 
 void LocalServer::slotReadClient(){
-    //QLocalSocket* localSocket = (QLocalSocket*)sender();
     QDataStream inputDataStream(localSocket);
     inputDataStream.setVersion(QDataStream::Qt_6_2);
+    qInfo() << "Сервер начал прием данных от клиента";
     while (true){
         if (!nextBlockSize){
             if (localSocket->bytesAvailable() < (int)sizeof(quint16)){
@@ -32,10 +31,9 @@ void LocalServer::slotReadClient(){
             }
             inputDataStream >> nextBlockSize;
         }
-
-        QString command;
-        inputDataStream >> command;
+        inputDataStream >> host >> protocol >> idPass;
         nextBlockSize = 0;
+        qInfo() << "Данные от клиента получены";
         sendToClient(localSocket, "msgRcvd1");
     }
 }
@@ -49,5 +47,5 @@ void LocalServer::sendToClient(QLocalSocket *localSocket, const QString &string)
     outputDataStream.device()->seek(0);
     outputDataStream << quint16(bits.size() - sizeof(quint16));
     localSocket->write(bits);
-
+    qInfo() << "Сервер отправил клиенту код " + string;
 }

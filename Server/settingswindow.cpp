@@ -38,7 +38,7 @@ void SettingsWindow::on_cancelButton_clicked(){
 void SettingsWindow::getSettingsFromRegistr(){
     QSettings settings;
     ui->autostartCB->setChecked(settings.value("settings/autostart", true).toBool());
-    ui->portLine->setText(QString::number(settings.value("settings/port", 7070).toInt()));
+    ui->portLine->setText(settings.value("settings/port", "URLconnectServer").toString());
 
     //Если получено название SSH клиента, которого нет в списке, то устанавливается значение по уполчанию - "PuTTY"
     if (ui->sshUseApp->findText(settings.value("settings/sshUseApp", "PuTTY").toString())){
@@ -55,6 +55,12 @@ void SettingsWindow::getSettingsFromRegistr(){
     ui->ieAppPath->setText(settings.value("settings/ieAppPath", "C:\\Program Files\\Internet Explorer\\iexplore.exe").toString());
 }
 
+bool SettingsWindow::validatorPath(QLineEdit *line){
+    QRegularExpression regexp(R"(^[A-z]:(\\\S([^\<,\*,\?,\\,\/,\:,\",\>,\|])+[^\s,\.])+.exe$)");
+    QRegularExpressionMatch match = regexp.match(line->text());
+    return match.hasMatch();
+}
+
 //Функция, открывающая окно, для выбора исполняемого файла и записывающая путь до выбранного файла в поле line
 void SettingsWindow::findExeFile(QLineEdit *line, const QString& title){
     QString filePath = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, title, "C:\\", "Exe (*.exe)"));
@@ -63,8 +69,40 @@ void SettingsWindow::findExeFile(QLineEdit *line, const QString& title){
 
 //Обработчик клика по кнопке "Сохранить"
 void SettingsWindow::on_saveButton_clicked(){
-    setSettingsToRegistr();
-    this->hide();
+    QList<QLineEdit*>lines = {
+        ui->sshAppPath,
+        ui->rdpAppPath,
+        ui->vncAppPath,
+        ui->winboxNewAppPath,
+        ui->winboxOldAppPath,
+        ui->ieAppPath
+    };
+    //Проверка путей к файлам на валидность
+    for (QLineEdit* line : lines){
+        if (!validatorPath(line)){
+            QMessageBox msg;
+            msg.setWindowTitle("Сохранение настроек");
+            msg.setTextFormat(Qt::RichText);
+            msg.setText("<table><tr>"
+                        "<td><img src=\":/iconMsg/error.png\" width=\"40\" height=\"40\"></td>"
+                        "<td><p style=\"vertical-align:middle\">Ошибка сохранения! Возможно некоторые пути к файлам не заполнены или являются некорректными</p></td>"
+                        "</tr></table>");
+            msg.exec();
+            qCritical() << "Настройки сервера не сохранены, так как строка в " + line->objectName() + " не является корректным путем к исполняемому файлу";
+            return;
+        }
+    }
+    //Если пути корректные, то спросить у пользователя сохранить ли изменения
+    QMessageBox msg;
+    msg.setWindowTitle("Сохранение настроек");
+    QPushButton* yesButton = msg.addButton("Да", QMessageBox::ButtonRole::YesRole);
+    connect(yesButton, &QPushButton::clicked, this, [&](){
+        setSettingsToRegistr();
+        this->hide();
+    });
+    msg.addButton("Нет", QMessageBox::ButtonRole::NoRole);
+    msg.setText("Вы уверены, что хотите внести изменения в настройки?");
+    msg.exec();
 }
 
 //Функция, записывающая настройки в реестр и применяющая их
@@ -83,7 +121,7 @@ void SettingsWindow::setSettingsToRegistr(){
         settings.remove(QCoreApplication::applicationName());
         qWarning() << "Программа удалена из автозагрузки Windows";
     }
-    settings.setValue("settings/port", ui->portLine->text().toInt());
+    settings.setValue("settings/port", ui->portLine->text());
     settings.setValue("settings/sshUseApp", ui->sshUseApp->currentText());
     settings.setValue("settings/sshAppPath", ui->sshAppPath->text());
     settings.setValue("settings/rdpAppPath", ui->rdpAppPath->text());

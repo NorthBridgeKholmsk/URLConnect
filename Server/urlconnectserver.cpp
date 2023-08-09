@@ -42,7 +42,11 @@ void URLConnectServer::setTrayIconActions(){
         qInfo() << "Открыто окно настройки сервера";
         settings->show();
     });
-    //connect(exitAction, &QAction::triggered, this, &QApplication::exit);
+    connect(logAction, &QAction::triggered, this, [&](){
+        qInfo() << "Открыто окно просмотра логов";
+        LogViewer logviewer;
+        logviewer.exec();
+    });
     connect(exitAction, &QAction::triggered, this, [&](){
         qWarning() << "Завершение работы программы было вызвано нажатием на кнопку выхода";
         QApplication::exit();

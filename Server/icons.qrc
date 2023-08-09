@@ -5,4 +5,11 @@
     <qresource prefix="/iconSettings">
         <file>findExe.png</file>
     </qresource>
+    <qresource prefix="/iconMsg">
+        <file>error.png</file>
+    </qresource>
+    <qresource prefix="/iconLogviewer">
+        <file>update.png</file>
+        <file>removeLog.png</file>
+    </qresource>
 </RCC>
