@@ -1,7 +1,7 @@
 #include "localserver.h"
 
 LocalServer::LocalServer(const QString& id, QObject *parent): QObject{parent}, nextBlockSize(0){
-    localServer = new QLocalServer(this);
+    localServer = new QLocalServer();
     if (!localServer->listen(id)){
         qCritical() << "Локальный сервер не может быть запущен, по причине: " + localServer->errorString() + " Для повторной попытки необходимо перезапустить программу";
         localServer->close();
@@ -16,8 +16,13 @@ LocalServer::LocalServer(const QString& id, QObject *parent): QObject{parent}, n
 
 void LocalServer::slotNewConnection(){
     localSocket = localServer->nextPendingConnection();
-    connect(localSocket, &QLocalSocket::disconnected, localSocket, &QLocalSocket::deleteLater);
-    connect(localSocket, &QLocalSocket::readyRead, localSocket, [&](){slotReadClient();});
+    connect(localSocket, &QLocalSocket::disconnected, localSocket, [&](){
+        //&QLocalSocket::deleteLater;
+        qInfo() << "Клиент отключился от сервера";
+        //localSocket->disconnectFromServer();
+    });
+    connect(localSocket, &QLocalSocket::readyRead, localSocket, [&](){this->slotReadClient();});
+    localSocket->write("msgRcvd1");
 }
 
 void LocalServer::slotReadClient(){

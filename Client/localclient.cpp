@@ -2,11 +2,18 @@
 
 LocalClient::LocalClient(const QString& serverID, const QString& _host, const QString& _protocol, const QString& _idPass, QObject *parent):
     QObject{parent}, nextBlockSize(0), host(_host), protocol(_protocol), idPass(_idPass){
-    localSocket = new QLocalSocket(this);
-    connect(localSocket, &QLocalSocket::errorOccurred ,this, &LocalClient::slotError);
+    localSocket = new QLocalSocket();
+    connect(localSocket, &QLocalSocket::errorOccurred ,localSocket, [&](){
+        this->slotError(localSocket->error());
+        QCoreApplication::exit();
+    }, Qt::QueuedConnection);
     localSocket->setServerName(serverID);
-    connect(localSocket, &QLocalSocket::connected, this, [&](){this->sendToServer();});
-    connect(localSocket, &QLocalSocket::readyRead, this, [&](){this->slotReadyRead();});
+    connect(localSocket, &QLocalSocket::connected, this, [&](){
+        qInfo() << "Клиент подключился к серверу";
+        this->sendToServer();
+    });
+    connect(localSocket, &QLocalSocket::readyRead, localSocket, [&](){this->slotReadyRead();});
+    qInfo() << "Клиент начал подключение к серверу";
     localSocket->connectToServer();
 }
 
@@ -21,9 +28,6 @@ void LocalClient::slotReadyRead(){
             }
         }
         inputDataStream >> nextBlockSize;
-        if (localSocket->bytesAvailable() < nextBlockSize){
-            break;
-        }
         QString string;
         inputDataStream >> string;
         qInfo() << "Клиент получил данные от сервера";
@@ -45,7 +49,6 @@ void LocalClient::slotError(QLocalSocket::LocalSocketError error){
                        "Соединение с сервер было сброшено." :
                        QString(localSocket->errorString()));
     qCritical() << "Клиент не может подключиться к серверу по причине: " + strError;
-    QCoreApplication::exit();
 }
 
 void LocalClient::sendToServer(){
