@@ -100,9 +100,12 @@
        </item>
        <item>
         <widget class="QComboBox" name="sshUseApp">
+         <property name="currentText">
+          <string>PuTTY</string>
+         </property>
          <item>
           <property name="text">
-           <string>PuTTY </string>
+           <string>PuTTY</string>
           </property>
          </item>
          <item>

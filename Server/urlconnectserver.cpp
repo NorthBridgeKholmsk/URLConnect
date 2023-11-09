@@ -4,7 +4,7 @@ URLConnectServer::URLConnectServer(QObject *parent): QObject{parent}{
     //Определение настроек для QSettings
     QCoreApplication::setOrganizationName("Северный мост");
     QCoreApplication::setApplicationName("URLConnect");
-
+    settings = new SettingsWindow();
     //Добавление меню управления и отображение значка в трее
     setTrayIconActions();
     showTrayIcon();

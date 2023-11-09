@@ -41,8 +41,8 @@ void SettingsWindow::getSettingsFromRegistr(){
     ui->portLine->setText(settings.value("settings/port", "URLconnectServer").toString());
 
     //Если получено название SSH клиента, которого нет в списке, то устанавливается значение по уполчанию - "PuTTY"
-    if (ui->sshUseApp->findText(settings.value("settings/sshUseApp", "PuTTY").toString())){
-        ui->sshUseApp->setCurrentText(settings.value("settings/sshUseApp", "PuTTY").toString());
+    if (ui->sshUseApp->findText(settings.value("settings/sshUseApp").toString())){
+        ui->sshUseApp->setCurrentText(settings.value("settings/sshUseApp").toString());
     }
     else{
         ui->sshUseApp->setCurrentText("PuTTY");

@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     ../Logger/logger.cpp \
+    commandhandler.cpp \
     localserver.cpp \
     logviewer.cpp \
     main.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 HEADERS += \
     ../Logger/logger.h \
+    commandhandler.h \
     localserver.h \
     logviewer.h \
     settingswindow.h \
@@ -36,3 +38,9 @@ RESOURCES += \
     icons.qrc
 
 DEFINES += QT_MESSAGELOGCONTEXT
+RC_ICONS = TrayIcon.ico
+VERSION = 0.1b
+QMAKE_TARGET_COMPANY = North Bridge
+QMAKE_TARGET_PRODUCT = URLConnect
+QMAKE_TARGET_DESCRIPTION = Using a URL to launch programs from a browser
+QMAKE_TARGET_COPYRIGHT = North Bridge

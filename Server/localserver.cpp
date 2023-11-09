@@ -40,6 +40,7 @@ void LocalServer::slotReadClient(){
         nextBlockSize = 0;
         qInfo() << "Данные от клиента получены";
         sendToClient(localSocket, "msgRcvd1");
+        emit dataReceived(host, protocol, idPass);
     }
 }
 

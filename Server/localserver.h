@@ -7,8 +7,12 @@
 
 class LocalServer: public QObject
 {
+    Q_OBJECT
 public:
     LocalServer(const QString& id, QObject *parent = nullptr);
+
+signals:
+    void dataReceived(const QString& host, const QString& protocol, const QString& idPass);
 
 public slots:
     virtual void slotNewConnection();
