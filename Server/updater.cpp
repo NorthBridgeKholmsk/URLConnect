@@ -63,7 +63,6 @@ QString Updater::getLatestVersionNumber(){
         timer.stop();
         if (reply->error() == QNetworkReply::NoError){
             version = reply->readAll();
-            version.chop(1);
         }
         else{
             qCritical() << "Не удалось получить номер последней версии программы. " + reply->errorString();

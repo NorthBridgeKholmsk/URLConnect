@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "URLConnect"
-#define MyAppVersion "0.1b"
+#define MyAppVersion "1.0"
 #define MyAppPublisher "North Bridge"
 #define MyAppURL "https://github.com/NorthBridgeKholmsk/URLConnect"
 #define MyAppExeName "URLConnect.exe"
@@ -34,7 +34,6 @@ WizardStyle=modern
 Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Dirs]
-Name: "{app}\EdgeBlocker"
 Name: "{app}\iconengines"
 Name: "{app}\imageformats"
 Name: "{app}\platforms"
@@ -55,7 +54,7 @@ Source: "C:\Users\fedorov\Desktop\URLConnect\Qt6Network.dll"; DestDir: "{app}"; 
 Source: "C:\Users\fedorov\Desktop\URLConnect\Qt6Svg.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\fedorov\Desktop\URLConnect\Qt6Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\fedorov\Desktop\URLConnect\URLConnectClient.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\fedorov\Desktop\URLConnect\EdgeBlocker\*"; DestDir: "{app}\EdgeBlocker"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\fedorov\Desktop\URLConnect\StartIE.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\fedorov\Desktop\URLConnect\iconengines\*"; DestDir: "{app}\iconengines"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Users\fedorov\Desktop\URLConnect\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Users\fedorov\Desktop\URLConnect\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
