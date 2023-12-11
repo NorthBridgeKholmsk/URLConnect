@@ -4,6 +4,9 @@ URLConnectServer::URLConnectServer(QObject *parent): QObject{parent}{
     //Определение настроек для QSettings
     QCoreApplication::setOrganizationName("Северный мост");
     QCoreApplication::setApplicationName("URLConnect");
+
+    checkUpdate();
+
     settings = new SettingsWindow();
     //Добавление меню управления и отображение значка в трее
     setTrayIconActions();
@@ -22,6 +25,24 @@ void URLConnectServer::trayIconActivated(QSystemTrayIcon::ActivationReason reaso
     }
 }
 
+void URLConnectServer::checkUpdate(){
+    Updater updater;
+    if (!updater.isLatestVersion()){
+        qInfo() << "Найдена новая версия программы (текущая версия " + QString(APP_VERSION) + ", новая версия " + updater.getLatestVersion() + ").";
+        QMessageBox msg;
+        msg.setWindowTitle("Обновление URLConnect");
+        QPushButton* yesButton = msg.addButton("Да", QMessageBox::ButtonRole::YesRole);
+        connect(yesButton, &QPushButton::clicked, this, [&](){
+            updater.downloadLatestVersion();
+            updater.installLatestVersion();
+            QApplication::exit();
+        });
+        msg.addButton("Нет", QMessageBox::ButtonRole::NoRole);
+        msg.setText("Найдена новая версия программы (текущая версия " + QString(APP_VERSION) + ", новая версия " + updater.getLatestVersion() + "). Установить новую версию?");
+        msg.exec();
+    }
+}
+
 //Функция, создающая значок в трее
 void URLConnectServer::showTrayIcon(){
     QSystemTrayIcon* trayIcon = new QSystemTrayIcon();
@@ -35,12 +56,17 @@ void URLConnectServer::showTrayIcon(){
 //Функция, добавляющее меню управления значку в трее
 void URLConnectServer::setTrayIconActions(){
     openSettingsAction = new QAction("Настройки", this);
+    updateAction = new QAction("Обновить версию", this);
     logAction = new QAction("Логи", this);
     exitAction = new QAction("Выход", this);
 
     connect(openSettingsAction, &QAction::triggered, this, [&](){
         qInfo() << "Открыто окно настройки сервера";
         settings->show();
+    });
+    connect(updateAction, &QAction::triggered, this, [&](){
+        qInfo() << "Запущено обновление программы";
+        checkUpdate();
     });
     connect(logAction, &QAction::triggered, this, [&](){
         qInfo() << "Открыто окно просмотра логов";
@@ -54,6 +80,7 @@ void URLConnectServer::setTrayIconActions(){
 
     trayIconMenu = new QMenu();
     trayIconMenu->addAction(openSettingsAction);
+    trayIconMenu->addAction(updateAction);
     trayIconMenu->addAction(logAction);
     trayIconMenu->addAction(exitAction);
 }

@@ -22,7 +22,6 @@ QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,
         header.next();
         request.setRawHeader(header.key().toLocal8Bit(), header.value().toLocal8Bit());
     }
-    //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json"); //Устанавливаем заголовок запроса
     QNetworkReply *reply;
     if (isGetRequest){
         reply = manager->get(request);
@@ -31,7 +30,6 @@ QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,
         reply = manager->post(request, "");
     }
 
-    //Реализация ожидания загрузки ответа с таймаутом 10 сек
     QTimer timer;
     timer.setSingleShot(true);
     QEventLoop loop;
@@ -52,6 +50,7 @@ QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,
             QJsonParseError error;
             QJsonDocument document = QJsonDocument::fromJson(jsonString.toUtf8(), &error);
             result = document.object();
+            qCritical() << "Возникла ошибка при получении данных из Passwork. " + result["data"].toObject()["error"].toString();
         }
     }
     else{

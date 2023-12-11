@@ -16,6 +16,7 @@ SOURCES += \
     main.cpp \
     passworkapi.cpp \
     settingswindow.cpp \
+    updater.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
@@ -25,6 +26,7 @@ HEADERS += \
     logviewer.h \
     passworkapi.h \
     settingswindow.h \
+    updater.h \
     urlconnectserver.h
 
 FORMS += \
@@ -42,7 +44,10 @@ RESOURCES += \
 DEFINES += QT_MESSAGELOGCONTEXT
 RC_ICONS = TrayIcon.ico
 VERSION = 0.1b
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 QMAKE_TARGET_COMPANY = North Bridge
 QMAKE_TARGET_PRODUCT = URLConnect
 QMAKE_TARGET_DESCRIPTION = Using a URL to launch programs from a browser
 QMAKE_TARGET_COPYRIGHT = North Bridge
+
+DISTFILES +=

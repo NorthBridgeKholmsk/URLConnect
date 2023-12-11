@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QEventLoop>
 #include <QMap>
+#include "../Logger/logger.h"
 
 class PassworkAPI: public QObject{
 public:

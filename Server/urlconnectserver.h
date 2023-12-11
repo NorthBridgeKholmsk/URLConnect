@@ -7,9 +7,11 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QObject>
+#include <QPushButton>
 #include "settingswindow.h"
 #include "../Logger/logger.h"
 #include "logviewer.h"
+#include "updater.h"
 
 class URLConnectServer : public QObject
 {
@@ -25,10 +27,13 @@ public slots:
 private:
     QMenu* trayIconMenu;
     QAction* openSettingsAction;
+    QAction* updateAction;
     QAction* logAction;
     QAction* exitAction;
 
     SettingsWindow* settings = new SettingsWindow();
+
+    void checkUpdate();
 };
 
 #endif // URLCONNECTSERVER_H
