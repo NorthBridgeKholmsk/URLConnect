@@ -15,12 +15,6 @@ SettingsWindow::SettingsWindow(QWidget *parent) :QDialog(parent), ui(new Ui::Set
     connect(ui->vncFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->vncAppPath, "Выберите исполняемый файл клиента VNC");});
     connect(ui->winboxNewFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->winboxNewAppPath, "Выберите исполняемый файл Winbox новой версии");});
     connect(ui->winboxOldFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->winboxOldAppPath, "Выберите исполняемый файл Winbox старой версии");});
-    connect(ui->ieFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->ieAppPath, "Выберите исполняемый файл Internet Explorer");});
-    //Подключаем кнопке блокировки MS Edge запуск программы Edge Blocker
-    connect(ui->edgeBlockRunButton, &QPushButton::clicked, this, [](){
-        QString pathToEdgeBlocker = QDir::toNativeSeparators(QCoreApplication::applicationDirPath()) + "\\EdgeBlocker\\EdgeBlock.exe";
-        system(pathToEdgeBlocker.toStdString().c_str());
-    });
 }
 
 SettingsWindow::~SettingsWindow(){
@@ -38,6 +32,7 @@ void SettingsWindow::on_cancelButton_clicked(){
 void SettingsWindow::getSettingsFromRegistr(){
     QSettings settings;
     ui->autostartCB->setChecked(settings.value("settings/autostart", true).toBool());
+    ui->apiKey->setText(QByteArray::fromBase64(settings.value("settings/apiKey").toByteArray()));
     ui->portLine->setText(settings.value("settings/port", "URLconnectServer").toString());
 
     //Если получено название SSH клиента, которого нет в списке, то устанавливается значение по уполчанию - "PuTTY"
@@ -52,7 +47,6 @@ void SettingsWindow::getSettingsFromRegistr(){
     ui->vncAppPath->setText(settings.value("settings/vncAppPath", "C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe").toString());
     ui->winboxNewAppPath->setText(settings.value("settings/winboxNewAppPath", "C:\\bin\\winbox.exe").toString());
     ui->winboxOldAppPath->setText(settings.value("settings/winboxOldAppPath", "C:\\bin\\winbox_old.exe").toString());
-    ui->ieAppPath->setText(settings.value("settings/ieAppPath", "C:\\Program Files\\Internet Explorer\\iexplore.exe").toString());
 }
 
 bool SettingsWindow::validatorPath(QLineEdit *line){
@@ -75,7 +69,6 @@ void SettingsWindow::on_saveButton_clicked(){
         ui->vncAppPath,
         ui->winboxNewAppPath,
         ui->winboxOldAppPath,
-        ui->ieAppPath
     };
     //Проверка путей к файлам на валидность
     for (QLineEdit* line : lines){
@@ -121,6 +114,7 @@ void SettingsWindow::setSettingsToRegistr(){
         settings.remove(QCoreApplication::applicationName());
         qWarning() << "Программа удалена из автозагрузки Windows";
     }
+    settings.setValue("settings/apiKey", ui->apiKey->text().toLocal8Bit().toBase64());
     settings.setValue("settings/port", ui->portLine->text());
     settings.setValue("settings/sshUseApp", ui->sshUseApp->currentText());
     settings.setValue("settings/sshAppPath", ui->sshAppPath->text());
@@ -128,7 +122,6 @@ void SettingsWindow::setSettingsToRegistr(){
     settings.setValue("settings/vncAppPath", ui->vncAppPath->text());
     settings.setValue("settings/winboxNewAppPath", ui->winboxNewAppPath->text());
     settings.setValue("settings/winboxOldAppPath", ui->winboxOldAppPath->text());
-    settings.setValue("settings/ieAppPath", ui->ieAppPath->text());
     qWarning() << "Окно настройки сервера закрыто с сохранением настроек. Настройки записаны в реестр";
 }
 

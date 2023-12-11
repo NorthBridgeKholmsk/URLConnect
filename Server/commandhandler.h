@@ -5,7 +5,10 @@
 #include <windows.h>
 #include <QSettings>
 #include <QFile>
+#include <QDir>
+#include <QCoreApplication>
 #include "localserver.h"
+#include "passworkapi.h"
 
 class CommandHandler: public QObject
 {

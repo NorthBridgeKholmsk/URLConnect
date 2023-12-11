@@ -6,23 +6,38 @@ CommandHandler::CommandHandler(LocalServer& localserver){
 
 void CommandHandler::runApp(const QString &host, const QString &protocol, const QString &idPass){
     qInfo() << "Обработчик команд получил данные для запуска";
-    //Здесь будет код для получения логина и пароля из Passwd
-    /*QString login = "admin";
-    QString pass = "ReaOnlMem34";*/
+
+    QString login = "";
+    QString pass = "";
+    if (!idPass.isEmpty()){
+        PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), idPass);
+        login = psapi.getLogin();
+        pass = psapi.getPass();
+    }
 
     QString command;
     if (protocol == "ssh" && exeIsExsists("settings/sshAppPath")){
         command = "start " + PathShielding(QSettings().value("settings/sshAppPath").toString());
-        if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-            //command += " -ssh " + login + "@" + host + " -pw " + pass;
-            command += " -ssh " + host;
+        if (!pass.isEmpty()){
+            if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
+                command += " -ssh " + login + "@" + host + " -pw " + pass;
+            }
+            else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
+                  command += " -newtab \"sshpass -p " + pass + " ssh " + login + "@" + host + "\"" ;
+            }
+            else {
+                qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
+                return;
+            }
         }
-        /*else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
-              command += " -newtab \"sshpass -p " + pass + " ssh " + login + "@" + host + "\"" ;
-        }*/
-        else {
-            qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
-            return;
+        else{
+            if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
+                command += " -ssh " + host;
+            }
+            else {
+                qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы или индификатор пароля небыл найден";
+                return;
+            }
         }
     }
     else if (protocol == "rdp" && exeIsExsists("settings/rdpAppPath")){
@@ -31,21 +46,33 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     }
     else if (protocol == "vnc" && exeIsExsists("settings/vncAppPath")){
         command = "start " + PathShielding(QSettings().value("settings/vncAppPath").toString());
-        //command += " -host=" + host + " -password=" + pass;
-        command += " -host=" + host + " -password=599599";
+        if (!pass.isEmpty()){
+            command += " -host=" + host + " -password=" + pass;
+        }
+        else{
+            command += " -host=" + host;
+        }
     }
     else if (protocol == "winbox" && exeIsExsists("settings/winboxNewAppPath")){
         command = "start " + PathShielding(QSettings().value("settings/winboxNewAppPath").toString());
-        //command += " " + host + " " + login + " " + pass;
-        command += " " + host + " admin " + idPass;
+        if (!pass.isEmpty()){
+            command += " " + host + " " + login + " " + pass;
+        }
+        else{
+            command += " " + host + " admin " + idPass;
+        }
     }
     else if (protocol == "old_winbox" && exeIsExsists("settings/winboxOldAppPath")){
         command = "start " + PathShielding(QSettings().value("settings/winboxOldAppPath").toString());
-        //command += " " + host + " " + login + " " + pass;
-        command += " " + host + " admin " + idPass;
+        if (!pass.isEmpty()){
+            command += " " + host + " " + login + " " + pass;
+        }
+        else{
+            command += " " + host + " admin " + idPass;
+        }
     }
     else if (protocol == "ie" && exeIsExsists("settings/ieAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/ieAppPath").toString());
+        command = PathShielding(QDir::toNativeSeparators(QCoreApplication::applicationDirPath()) + "\\StartIE.vbs");
         command += "  http://" + host;
     }
     else if (protocol == "ping"){

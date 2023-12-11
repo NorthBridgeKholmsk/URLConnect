@@ -14,6 +14,7 @@ SOURCES += \
     localserver.cpp \
     logviewer.cpp \
     main.cpp \
+    passworkapi.cpp \
     settingswindow.cpp \
     urlconnectserver.cpp
 
@@ -22,6 +23,7 @@ HEADERS += \
     commandhandler.h \
     localserver.h \
     logviewer.h \
+    passworkapi.h \
     settingswindow.h \
     urlconnectserver.h
 
