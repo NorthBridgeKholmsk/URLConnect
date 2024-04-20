@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -14,6 +15,7 @@
 
 class PassworkAPI: public QObject{
 public:
+    explicit PassworkAPI(const QString& _apiKey, const QString& _hostname, const QString& _protocol);
     explicit PassworkAPI(const QString& _apiKey, const QString& _passid);
 
     QString getLogin();
@@ -21,11 +23,12 @@ public:
 
 private:    
     QString apiKey;
+    QString hostname;
     QString passid;
     QJsonObject response;
 
     QString getToken(const QJsonObject& response);
-    QJsonObject sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest);
+    QJsonObject sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest, const QString& data="");
 };
 
 #endif // PASSWORKAPI_H

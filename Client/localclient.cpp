@@ -1,7 +1,7 @@
 #include "localclient.h"
 
-LocalClient::LocalClient(const QString& serverID, const QString& _host, const QString& _protocol, const QString& _idPass, QObject *parent):
-    QObject{parent}, nextBlockSize(0), host(_host), protocol(_protocol), idPass(_idPass){
+LocalClient::LocalClient(const QString& serverID, const QString& _host, const QString& _protocol, const QString& _hostname, QObject *parent):
+    QObject{parent}, nextBlockSize(0), host(_host), protocol(_protocol), hostname(_hostname){
     localSocket = new QLocalSocket();
     connect(localSocket, &QLocalSocket::errorOccurred ,localSocket, [&](){
         this->slotError(localSocket->error());
@@ -56,7 +56,7 @@ void LocalClient::sendToServer(){
     QByteArray bits;
     QDataStream outputDataStream(&bits, QIODevice::WriteOnly);
     outputDataStream.setVersion(QDataStream::Qt_6_2);
-    outputDataStream << quint16(0) << host << protocol << idPass;
+    outputDataStream << quint16(0) << host << protocol << hostname;
 
     outputDataStream.device()->seek(0);
     outputDataStream << quint16(bits.size() - sizeof(quint16));

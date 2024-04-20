@@ -9,12 +9,12 @@ public:
     explicit ParserURL(const QString& arg, QObject *parent = nullptr);
     QString getProtocol() const;
     QString getHost() const;
-    QString getIdPass() const;
+    QString getHostname() const;
 
 private:
     QString protocol;
     QString host;
-    QString idPass;
+    QString hostname;
 };
 
 #endif // PARSERURL_H

@@ -1,5 +1,30 @@
 #include "passworkapi.h"
 
+PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const QString& _protocol){
+    apiKey = _apiKey;
+    hostname = _hostname;
+
+    QMap<QString,QString>headerAuth = {{"Accept","application/json"}};
+    QString token = getToken(sendResquest("/auth/login/"+apiKey, headerAuth, false));
+
+    QMap<QString,QString>headerFindPass = {{"Accept","application/json"},{"Passwork-Auth",token}};
+    response = sendResquest("/passwords/search", headerFindPass, false, "{\"query\":\""+hostname+"\"}");
+    QString passid;
+    QJsonArray passwds = response["data"].toArray();
+    for (int i = 0; i < passwds.size(); i++){
+        QJsonArray tags = passwds[i].toObject()["tags"].toArray();
+        if (tags.contains(_protocol) && tags.contains("admin")){
+            passid = passwds[i].toObject()["id"].toString();
+            break;
+        }
+    }
+
+    QMap<QString,QString>headerPass = {{"Accept","application/json"},{"Passwork-Auth",token}};
+    response = sendResquest("/passwords/"+passid, headerPass, true);
+
+    sendResquest("/auth/logout", headerPass, false);
+}
+
 PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
     apiKey = _apiKey;
     passid = _passid;
@@ -13,7 +38,7 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
     sendResquest("/auth/logout", headerPass, false);
 }
 
-QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest){
+QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest, const QString& data){
     QJsonObject result;
     QNetworkAccessManager* manager = new QNetworkAccessManager();
     QNetworkRequest request(QUrl("https://s-passwd-nb.kholmsk.ru/api/v4"+method));
@@ -27,7 +52,7 @@ QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,
         reply = manager->get(request);
     }
     else{
-        reply = manager->post(request, "");
+        reply = manager->post(request, data.toLocal8Bit());
     }
 
     QTimer timer;

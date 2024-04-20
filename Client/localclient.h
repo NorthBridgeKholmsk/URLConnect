@@ -13,14 +13,14 @@ public:
     explicit LocalClient(const QString& serverID,
                          const QString& _host,
                          const QString& _protocol,
-                         const QString& _idPass,
+                         const QString& _hostname,
                          QObject *parent = nullptr);
     void sendToServer();
 
 private:
     QLocalSocket* localSocket;
     quint16 nextBlockSize;
-    const QString host, protocol, idPass;
+    const QString host, protocol, hostname;
 
 private slots:
     void slotReadyRead();

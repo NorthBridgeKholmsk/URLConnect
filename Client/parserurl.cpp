@@ -5,9 +5,9 @@ ParserURL::ParserURL(const QString& arg, QObject *parent): QObject{parent}{
     host = _arg.at(0);
     protocol = _arg.at(1);
     if (_arg.size() > 2)
-        idPass = _arg.at(2);
+        hostname = _arg.at(2);
     else
-        idPass = "0";
+        hostname = "0";
     qInfo() << "Клиент разобрал полученый URL";
 }
 
@@ -19,6 +19,6 @@ QString ParserURL::getHost() const{
     return host;
 }
 
-QString ParserURL::getIdPass() const{
-    return idPass;
+QString ParserURL::getHostname() const{
+    return hostname;
 }
