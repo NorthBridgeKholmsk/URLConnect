@@ -17,7 +17,7 @@ public:
     CommandHandler(LocalServer& localserver);
 
 public slots:
-    void runApp(const QString& host, const QString& protocol, const QString& idPass);
+    void runApp(const QString& host, const QString& protocol, const QString& hostname);
 
 private:
     bool exeIsExsists(const QString& keyReg);

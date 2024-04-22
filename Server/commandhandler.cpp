@@ -4,15 +4,25 @@ CommandHandler::CommandHandler(LocalServer& localserver){
     connect(&localserver, &LocalServer::dataReceived, this, &CommandHandler::runApp);
 }
 
-void CommandHandler::runApp(const QString &host, const QString &protocol, const QString &idPass){
+void CommandHandler::runApp(const QString &host, const QString &protocol, const QString &_hostname){
     qInfo() << "Обработчик команд получил данные для запуска";
 
+    QString hostname = _hostname;
     QString login = "";
     QString pass = "";
-    if (!idPass.isEmpty()){
-        PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), idPass);
+    if (!hostname.isEmpty()){
+        if (protocol == "vnc"){
+            hostname = hostname.split('.')[1];
+        }
+        PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname, protocol);
         login = psapi.getLogin();
         pass = psapi.getPass();
+
+        if (pass.isEmpty()){
+            PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname);
+            login = psapi.getLogin();
+            pass = psapi.getPass();
+        }
     }
 
     QString command;
@@ -59,7 +69,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
             command += " " + host + " " + login + " " + pass;
         }
         else{
-            command += " " + host + " admin " + idPass;
+            command += " " + host + " admin " + hostname;
         }
     }
     else if (protocol == "old_winbox" && exeIsExsists("settings/winboxOldAppPath")){
@@ -68,7 +78,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
             command += " " + host + " " + login + " " + pass;
         }
         else{
-            command += " " + host + " admin " + idPass;
+            command += " " + host + " admin " + hostname;
         }
     }
     else if (protocol == "ie" && exeIsExsists("settings/ieAppPath")){
