@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "URLConnect"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "North Bridge"
 #define MyAppURL "https://github.com/NorthBridgeKholmsk/URLConnect"
 #define MyAppExeName "URLConnect.exe"

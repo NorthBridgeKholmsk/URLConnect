@@ -13,7 +13,9 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const
     QJsonArray passwds = response["data"].toArray();
     for (int i = 0; i < passwds.size(); i++){
         QJsonArray tags = passwds[i].toObject()["tags"].toArray();
-        if (tags.contains(_protocol) && tags.contains("admin")){
+        QString protocol;
+        _protocol == "old_winbox" ? protocol = "winbox" : protocol = _protocol;
+        if (tags.contains(protocol) && tags.contains("admin")){
             passid = passwds[i].toObject()["id"].toString();
             break;
         }
