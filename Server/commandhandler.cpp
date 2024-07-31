@@ -18,16 +18,17 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         login = psapi.getLogin();
         pass = psapi.getPass();
 
-        if (pass.isEmpty()){
+        //На удаление
+        /*if (pass.isEmpty()){
             PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname);
             login = psapi.getLogin();
             pass = psapi.getPass();
-        }
+        }*/
     }
 
     QString command;
     if (protocol == "ssh" && exeIsExsists("settings/sshAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/sshAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
         if (!pass.isEmpty()){
             if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
                 command += " -ssh " + login + "@" + host + " -pw " + pass;
@@ -51,11 +52,11 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         }
     }
     else if (protocol == "rdp" && exeIsExsists("settings/rdpAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/rdpAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/rdpAppPath").toString());
         command += " -V:" + host;
     }
     else if (protocol == "vnc" && exeIsExsists("settings/vncAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/vncAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/vncAppPath").toString());
         if (!pass.isEmpty()){
             command += " -host=" + host + " -password=" + pass;
         }
@@ -64,7 +65,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         }
     }
     else if (protocol == "winbox" && exeIsExsists("settings/winboxNewAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/winboxNewAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/winboxNewAppPath").toString());
         if (!pass.isEmpty()){
             command += " " + host + " " + login + " " + pass;
         }
@@ -73,7 +74,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         }
     }
     else if (protocol == "old_winbox" && exeIsExsists("settings/winboxOldAppPath")){
-        command = "start " + PathShielding(QSettings().value("settings/winboxOldAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/winboxOldAppPath").toString());
         if (!pass.isEmpty()){
             command += " " + host + " " + login + " " + pass;
         }
@@ -86,13 +87,13 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         command += "  http://" + host;
     }
     else if (protocol == "ping"){
-        command = "start cmd /K ping " + host + " -t";
+        command = "start /b cmd /K ping " + host + " -t";
     }
     else if (protocol == "traceroute"){
-        command = "start cmd /K tracert -d " + host;
+        command = "start /b cmd /K tracert -d " + host;
     }
     else if (protocol == "telnet") {
-        command = "start " + PathShielding(QSettings().value("settings/sshAppPath").toString());
+        command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
         if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
             command += " -telnet " + host;
         }

@@ -16,7 +16,7 @@
 class PassworkAPI: public QObject{
 public:
     explicit PassworkAPI(const QString& _apiKey, const QString& _hostname, const QString& _protocol);
-    explicit PassworkAPI(const QString& _apiKey, const QString& _passid);
+    //explicit PassworkAPI(const QString& _apiKey, const QString& _passid);
 
     QString getLogin();
     QString getPass();
