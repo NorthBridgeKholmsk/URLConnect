@@ -13,7 +13,9 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const
     QJsonArray passwds = response["data"].toArray();
     for (int i = 0; i < passwds.size(); i++){
         QJsonArray tags = passwds[i].toObject()["tags"].toArray();
-        if (tags.contains(_protocol) && tags.contains("admin")){
+        QString protocol;
+        _protocol == "old_winbox" ? protocol = "winbox" : protocol = _protocol;
+        if (tags.contains(protocol) && tags.contains("admin")){
             passid = passwds[i].toObject()["id"].toString();
             break;
         }
@@ -25,7 +27,8 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const
     sendResquest("/auth/logout", headerPass, false);
 }
 
-PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
+//на удаление
+/*PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
     apiKey = _apiKey;
     passid = _passid;
 
@@ -36,7 +39,7 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
     response = sendResquest("/passwords/"+passid, headerPass, true);
 
     sendResquest("/auth/logout", headerPass, false);
-}
+}*/
 
 QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest, const QString& data){
     QJsonObject result;

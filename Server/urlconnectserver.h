@@ -33,7 +33,7 @@ private:
 
     SettingsWindow* settings = new SettingsWindow();
 
-    void checkUpdate();
+    void checkUpdate(const bool& isManualExec = false);
 };
 
 #endif // URLCONNECTSERVER_H

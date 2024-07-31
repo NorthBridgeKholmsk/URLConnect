@@ -4,7 +4,7 @@ URLConnectServer::URLConnectServer(QObject *parent): QObject{parent}{
     //Определение настроек для QSettings
     QCoreApplication::setOrganizationName("Северный мост");
     QCoreApplication::setApplicationName("URLConnect");
-
+    QApplication::setQuitOnLastWindowClosed(false);
     checkUpdate();
 
     settings = new SettingsWindow();
@@ -25,12 +25,12 @@ void URLConnectServer::trayIconActivated(QSystemTrayIcon::ActivationReason reaso
     }
 }
 
-void URLConnectServer::checkUpdate(){
+void URLConnectServer::checkUpdate(const bool &isManualExec){
     Updater updater;
+    QMessageBox msg;
+    msg.setWindowTitle("Обновление URLConnect");
     if (!updater.isLatestVersion()){
         qInfo() << "Найдена новая версия программы (текущая версия " + QString(APP_VERSION) + ", новая версия " + updater.getLatestVersion() + ").";
-        QMessageBox msg;
-        msg.setWindowTitle("Обновление URLConnect");
         QPushButton* yesButton = msg.addButton("Да", QMessageBox::ButtonRole::YesRole);
         connect(yesButton, &QPushButton::clicked, this, [&](){
             updater.downloadLatestVersion();
@@ -38,9 +38,14 @@ void URLConnectServer::checkUpdate(){
             QApplication::exit();
         });
         msg.addButton("Нет", QMessageBox::ButtonRole::NoRole);
-        msg.setText("Найдена новая версия программы (текущая версия " + QString(APP_VERSION) + ", новая версия " + updater.getLatestVersion() + "). Установить новую версию?");
-        msg.exec();
+        msg.setText("Найдена новая версия программы (текущая версия " + QString(APP_VERSION) + ", новая версия " + updater.getLatestVersion() + "). Установить новую версию?");       
     }
+    else{
+        msg.addButton("Ок", QMessageBox::ButtonRole::NoRole);
+        msg.setText("Обновлений для текущей версии " + QString(APP_VERSION) + " не найдено");
+        if (!isManualExec) return;
+    }
+    msg.exec();
 }
 
 //Функция, создающая значок в трее
@@ -66,7 +71,7 @@ void URLConnectServer::setTrayIconActions(){
     });
     connect(updateAction, &QAction::triggered, this, [&](){
         qInfo() << "Запущено обновление программы";
-        checkUpdate();
+        checkUpdate(true);
     });
     connect(logAction, &QAction::triggered, this, [&](){
         qInfo() << "Открыто окно просмотра логов";
