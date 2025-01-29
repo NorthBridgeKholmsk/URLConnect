@@ -27,20 +27,6 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const
     sendResquest("/auth/logout", headerPass, false);
 }
 
-//на удаление
-/*PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _passid){
-    apiKey = _apiKey;
-    passid = _passid;
-
-    QMap<QString,QString>headerAuth = {{"Accept","application/json"}};
-    QString token = getToken(sendResquest("/auth/login/"+apiKey, headerAuth, false));
-
-    QMap<QString,QString>headerPass = {{"Accept","application/json"},{"Passwork-Auth",token}};
-    response = sendResquest("/passwords/"+passid, headerPass, true);
-
-    sendResquest("/auth/logout", headerPass, false);
-}*/
-
 QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest, const QString& data){
     QJsonObject result;
     QNetworkAccessManager* manager = new QNetworkAccessManager();
