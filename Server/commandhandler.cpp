@@ -17,6 +17,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname, protocol);
         login = psapi.getLogin();
         pass = psapi.getPass();
+        //qInfo() << "!!!Выполняется подключение: Имя хоста: " + hostname + " Логин: " + login + " Пароль: " + pass;
 
         //На удаление
         /*if (pass.isEmpty()){
@@ -31,10 +32,10 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
         if (!pass.isEmpty()){
             if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-                command += " -ssh " + login + "@" + host + " -pw " + pass;
+                command += " -ssh " + login + "@" + host + " -pw '" + pass + "'";
             }
             else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
-                  command += " -newtab \"sshpass -p " + pass + " ssh " + login + "@" + host + "\"" ;
+                  command += " -newtab \"sshpass -p '" + pass + "' ssh " + login + "@" + host + "\"" ;
             }
             else {
                 qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
@@ -58,7 +59,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     else if (protocol == "vnc" && exeIsExsists("settings/vncAppPath")){
         command = "start /b " + PathShielding(QSettings().value("settings/vncAppPath").toString());
         if (!pass.isEmpty()){
-            command += " -host=" + host + " -password=" + pass;
+            command += " -host=" + host + " -password='" + pass + "'";
         }
         else{
             command += " -host=" + host;
@@ -67,7 +68,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     else if (protocol == "winbox" && exeIsExsists("settings/winboxNewAppPath")){
         command = "start /b " + PathShielding(QSettings().value("settings/winboxNewAppPath").toString());
         if (!pass.isEmpty()){
-            command += " " + host + " " + login + " " + pass;
+            command += " " + host + " " + login + " '" + pass + "'";
         }
         else{
             command += " " + host + " admin " + hostname;
@@ -76,7 +77,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     else if (protocol == "old_winbox" && exeIsExsists("settings/winboxOldAppPath")){
         command = "start /b " + PathShielding(QSettings().value("settings/winboxOldAppPath").toString());
         if (!pass.isEmpty()){
-            command += " " + host + " " + login + " " + pass;
+            command += " " + host + " " + login + " '" + pass + "'";
         }
         else{
             command += " " + host + " admin " + hostname;
