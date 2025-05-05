@@ -7,8 +7,10 @@
 #include <QFile>
 #include <QDir>
 #include <QCoreApplication>
+#include <QInputDialog>
 #include "localserver.h"
 #include "passworkapi.h"
+#include "settingswindow.h"
 
 class CommandHandler: public QObject
 {

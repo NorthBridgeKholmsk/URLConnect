@@ -34,6 +34,7 @@ void SettingsWindow::getSettingsFromRegistr(){
     ui->autostartCB->setChecked(settings.value("settings/autostart", true).toBool());
     ui->apiKey->setText(QByteArray::fromBase64(settings.value("settings/apiKey").toByteArray()));
     ui->portLine->setText(settings.value("settings/port", "URLconnectServer").toString());
+    ui->radiusLogin->setText(settings.value("settings/radiusLogin", "admin").toString());
 
     //Если получено название SSH клиента, которого нет в списке, то устанавливается значение по уполчанию - "PuTTY"
     if (ui->sshUseApp->findText(settings.value("settings/sshUseApp").toString())){
@@ -116,6 +117,7 @@ void SettingsWindow::setSettingsToRegistr(){
     }
     settings.setValue("settings/apiKey", ui->apiKey->text().toLocal8Bit().toBase64());
     settings.setValue("settings/port", ui->portLine->text());
+    settings.setValue("settings/radiusLogin", ui->radiusLogin->text());
     settings.setValue("settings/sshUseApp", ui->sshUseApp->currentText());
     settings.setValue("settings/sshAppPath", ui->sshAppPath->text());
     settings.setValue("settings/rdpAppPath", ui->rdpAppPath->text());

@@ -17,22 +17,28 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname, protocol);
         login = psapi.getLogin();
         pass = psapi.getPass();
-        //qInfo() << "!!!Выполняется подключение: Имя хоста: " + hostname + " Логин: " + login + " Пароль: " + pass;
-
-        //На удаление
-        /*if (pass.isEmpty()){
-            PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname);
-            login = psapi.getLogin();
-            pass = psapi.getPass();
-        }*/
+    }
+    else{
+        login = QSettings().value("settings/radiusLogin").toString();
+        if (protocol == "ssh"){
+            login += "-linux";
+        }
+        else if ((protocol == "winbox") || (protocol == "old_winbox")){
+            login += "-mk";
+        }
+        else if (protocol == "ciscossh"){
+            login += "-cisco";
+        }
+        SettingsWindow sw;
+        pass = QInputDialog::getText(sw.topLevelWidget(), "Ввод второго фактора", "Введите второй фактор из аутентификатора", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
     }
 
     QString command;
-    if (protocol == "ssh" && exeIsExsists("settings/sshAppPath")){
+    if (((protocol == "ssh") || (protocol == "ciscossh")) && exeIsExsists("settings/sshAppPath")){
         command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
         if (!pass.isEmpty()){
             if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-                command += " -ssh " + login + "@" + host + " -pw '" + pass + "'";
+                command += " -ssh " + login + "@" + host + " -pw " + pass;
             }
             else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
                   command += " -newtab \"sshpass -p '" + pass + "' ssh " + login + "@" + host + "\"" ;
