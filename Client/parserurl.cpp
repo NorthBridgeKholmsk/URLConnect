@@ -7,7 +7,7 @@ ParserURL::ParserURL(const QString& arg, QObject *parent): QObject{parent}{
     if (_arg.size() > 2)
         hostname = _arg.at(2);
     else
-        hostname = "0";
+        hostname = "";
     qInfo() << "Клиент разобрал полученый URL";
 }
 
