@@ -11,6 +11,7 @@
 #include "localserver.h"
 #include "passworkapi.h"
 #include "settingswindow.h"
+#include "ad_control_plugin_interface.h"
 
 class CommandHandler: public QObject
 {

@@ -49,7 +49,7 @@ QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,
     QEventLoop loop;
     QObject::connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-    timer.start(10000);
+    timer.start(100000);
     loop.exec();
     if (timer.isActive()){
         timer.stop();

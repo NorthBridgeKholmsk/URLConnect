@@ -15,22 +15,26 @@ SOURCES += \
     logviewer.cpp \
     main.cpp \
     passworkapi.cpp \
+    plugins.cpp \
     settingswindow.cpp \
     updater.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
     ../Logger/logger.h \
+    ad_control_plugin_interface.h \
     commandhandler.h \
     localserver.h \
     logviewer.h \
     passworkapi.h \
+    plugins.h \
     settingswindow.h \
     updater.h \
     urlconnectserver.h
 
 FORMS += \
     logviewer.ui \
+    plugins.ui \
     settingswindow.ui
 
 # Default rules for deployment.

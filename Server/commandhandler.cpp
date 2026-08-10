@@ -1,5 +1,6 @@
 #include "commandhandler.h"
 
+
 CommandHandler::CommandHandler(LocalServer& localserver){
     connect(&localserver, &LocalServer::dataReceived, this, &CommandHandler::runApp);
 }
@@ -111,6 +112,12 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
             qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
             return;
         }
+    }
+    else if (protocol.startsWith("adctl")){
+        SettingsWindow sw;
+        ADControlPluginInterface adcontrol;
+        login = QInputDialog::getText(sw.topLevelWidget(), "Ввод имени пользователя", "Введите имя администратора домена в формате domain\\login", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        command = adcontrol.adcontrolRunApp(host, protocol, login);
     }
     else {
         qCritical() << "Протокол \"" + protocol + "\" не поддерживается данной версией программы "
