@@ -20,18 +20,24 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
         pass = psapi.getPass();
     }
     else{
+        bool need2FACode = false;
         login = QSettings().value("settings/radiusLogin").toString();
         if (protocol == "ssh"){
             login += "-linux";
+            need2FACode = !need2FACode;
         }
         else if ((protocol == "winbox") || (protocol == "old_winbox")){
             login += "-mk";
+            need2FACode = !need2FACode;
         }
         else if (protocol == "ciscossh"){
             login += "-cisco";
+            need2FACode = !need2FACode;
         }
-        SettingsWindow sw;
-        pass = QInputDialog::getText(sw.topLevelWidget(), "Ввод второго фактора", "Введите второй фактор из аутентификатора", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        if (need2FACode){
+            SettingsWindow sw;
+            pass = QInputDialog::getText(sw.topLevelWidget(), "Ввод второго фактора", "Введите второй фактор из аутентификатора", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        }
     }
 
     QString command;
@@ -42,7 +48,12 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
                 command += " -ssh " + login + "@" + host + " -pw " + pass;
             }
             else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
-                  command += " -newtab \"sshpass -p '" + pass + "' ssh " + login + "@" + host + "\"" ;
+                if (protocol == "ciscossh"){
+                    command += " -newtab \"sshpass -p '" + pass + "' ssh -legacy -c aes256-cbc -oKexAlgorithms=+diffie-hellman-group1-sha1 " + login + "@" + host + "\"" ;
+                }
+                else{
+                    command += " -newtab \"sshpass -p '" + pass + "' ssh " + login + "@" + host + "\"" ;
+                }
             }
             else {
                 qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
@@ -115,9 +126,18 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     }
     else if (protocol.startsWith("adctl")){
         SettingsWindow sw;
-        ADControlPluginInterface adcontrol;
-        login = QInputDialog::getText(sw.topLevelWidget(), "Ввод имени пользователя", "Введите имя администратора домена в формате domain\\login", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
-        command = adcontrol.adcontrolRunApp(host, protocol, login);
+        plugins plugin;
+        QString filePath = plugin.getPluginFilePath(plugin.ui->CheckBox_AD_control);
+
+        ADControlPluginInterface *m_adPlugin = qobject_cast<ADControlPluginInterface*>(plugin.loadPlugin(filePath));
+
+        QString pluginName = QFileInfo(filePath).fileName();
+        pluginName.chop(4);
+        if (!m_adPlugin){
+            qWarning() << "Плагин " + pluginName + " не реализует интерфейс ADControlPluginInterface";
+            return;
+        }
+        command = m_adPlugin->adcontrolRunApp(sw, host, protocol);
     }
     else {
         qCritical() << "Протокол \"" + protocol + "\" не поддерживается данной версией программы "
@@ -127,8 +147,14 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
 
     HWND console = GetConsoleWindow();
     if (console)
-        ShowWindow(console,SW_HIDE);
-    system(command.toStdString().c_str());
+        ShowWindow(console,SW_SHOW);
+    if (!command.isEmpty()){
+        if (protocol.startsWith("adctl")){
+            runAsAdmin(command);
+            return;
+        }
+        system(command.toStdString().c_str());
+    }
 }
 
 bool CommandHandler::exeIsExsists(const QString& keyReg){
@@ -144,4 +170,22 @@ QString CommandHandler::PathShielding(const QString &path){
         }
     }
     return pathList.join('\\');
+}
+
+void CommandHandler::runAsAdmin(const QString& command) {
+    if (command.isEmpty()) return;
+
+    SHELLEXECUTEINFO sei = {};
+    sei.cbSize = sizeof(SHELLEXECUTEINFO);
+    sei.fMask = SEE_MASK_FLAG_NO_UI;
+    sei.lpVerb = L"runas";
+    sei.lpFile = L"cmd.exe";
+    QString params = QString("/c \"%1\"").arg(command);
+    std::wstring wParams = params.toStdWString();
+    sei.lpParameters = wParams.c_str();
+    sei.nShow = SW_SHOWNORMAL;
+
+    if (!ShellExecuteEx(&sei)) {
+        qCritical() << "Не удалось запустить команду с правами администратора. Пользователь отклонил UAC или ошибка системы.";
+    }
 }

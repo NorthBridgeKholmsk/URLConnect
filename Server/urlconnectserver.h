@@ -12,6 +12,7 @@
 #include "../Logger/logger.h"
 #include "logviewer.h"
 #include "updater.h"
+#include "plugins.h"
 
 class URLConnectServer : public QObject
 {
@@ -28,10 +29,12 @@ private:
     QMenu* trayIconMenu;
     QAction* openSettingsAction;
     QAction* updateAction;
+    QAction* pluginsAction;
     QAction* logAction;
     QAction* exitAction;
 
     SettingsWindow* settings = new SettingsWindow();
+    plugins* _plugins = new plugins();
 
     void checkUpdate(const bool& isManualExec = false);
 };
