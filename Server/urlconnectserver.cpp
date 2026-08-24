@@ -62,6 +62,7 @@ void URLConnectServer::showTrayIcon(){
 void URLConnectServer::setTrayIconActions(){
     openSettingsAction = new QAction("Настройки", this);
     updateAction = new QAction("Обновить версию", this);
+    pluginsAction = new QAction("Плагины", this);
     logAction = new QAction("Логи", this);
     exitAction = new QAction("Выход", this);
 
@@ -72,6 +73,10 @@ void URLConnectServer::setTrayIconActions(){
     connect(updateAction, &QAction::triggered, this, [&](){
         qInfo() << "Запущено обновление программы";
         checkUpdate(true);
+    });
+    connect(pluginsAction, &QAction::triggered, this, [&](){
+        qInfo() << "Открыто окно настройки плагинов";
+        _plugins->show();
     });
     connect(logAction, &QAction::triggered, this, [&](){
         qInfo() << "Открыто окно просмотра логов";
@@ -86,6 +91,7 @@ void URLConnectServer::setTrayIconActions(){
     trayIconMenu = new QMenu();
     trayIconMenu->addAction(openSettingsAction);
     trayIconMenu->addAction(updateAction);
+    trayIconMenu->addAction(pluginsAction);
     trayIconMenu->addAction(logAction);
     trayIconMenu->addAction(exitAction);
 }

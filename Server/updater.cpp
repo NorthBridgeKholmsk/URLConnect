@@ -9,6 +9,9 @@ bool Updater::isLatestVersion(){
 }
 
 void Updater::downloadLatestVersion(){
+    if (latestVersion[latestVersion.size()-1] == '\n'){
+        latestVersion.chop(1);
+    }
     QNetworkRequest request(QUrl("https://github.com/NorthBridgeKholmsk/URLConnect/releases/download/"+latestVersion+"/URLConnectInstall.exe"));
     QNetworkReply *reply = manager->get(request);
     QTimer timer;
@@ -73,5 +76,8 @@ QString Updater::getLatestVersionNumber(){
         reply->abort();
     }
     reply->deleteLater();
+    if (version[version.size()-1] == '\n'){
+        version.chop(1);
+    }
     return version;
 }

@@ -15,22 +15,26 @@ SOURCES += \
     logviewer.cpp \
     main.cpp \
     passworkapi.cpp \
+    plugins.cpp \
     settingswindow.cpp \
     updater.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
     ../Logger/logger.h \
+    ad_control_plugin_interface.h \
     commandhandler.h \
     localserver.h \
     logviewer.h \
     passworkapi.h \
+    plugins.h \
     settingswindow.h \
     updater.h \
     urlconnectserver.h
 
 FORMS += \
     logviewer.ui \
+    plugins.ui \
     settingswindow.ui
 
 # Default rules for deployment.
@@ -43,7 +47,7 @@ RESOURCES += \
 
 DEFINES += QT_MESSAGELOGCONTEXT
 RC_ICONS = TrayIcon.ico
-VERSION = 1.4.0
+VERSION = 1.5.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 QMAKE_TARGET_COMPANY = North Bridge
 QMAKE_TARGET_PRODUCT = URLConnect
