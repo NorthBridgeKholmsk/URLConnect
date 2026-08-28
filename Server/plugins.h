@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QDir>
 #include <QPluginLoader>
+#include <QStandardPaths>
 
 namespace Ui {
 class plugins;
@@ -23,6 +24,7 @@ public:
     explicit plugins(QWidget *parent = nullptr);
     QObject* loadPlugin(const QString& pathToPluginFile);
     QString getPluginFilePath(QCheckBox* key);
+    QString getPluginFilePath(const QString &url);
     ~plugins();
 
     Ui::plugins *ui;
@@ -38,7 +40,7 @@ signals:
 
 private:
     void getPluginsFromRegistr();
-    void handleReply(QNetworkReply *reply);
+    void handleReply(QNetworkReply *reply, const QString &url);
 
     QMap<QCheckBox*, QString> pluginList;
     QNetworkAccessManager *m_nam;

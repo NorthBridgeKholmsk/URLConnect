@@ -1,9 +1,6 @@
 #include "urlconnectserver.h"
 
 URLConnectServer::URLConnectServer(QObject *parent): QObject{parent}{
-    //Определение настроек для QSettings
-    QCoreApplication::setOrganizationName("Северный мост");
-    QCoreApplication::setApplicationName("URLConnect");
     QApplication::setQuitOnLastWindowClosed(false);
     checkUpdate();
 
