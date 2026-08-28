@@ -5,6 +5,9 @@
 #include "../Logger/logger.h"
 
 int main(int argc, char *argv[]){
+    //Определение настроек для QSettings
+    QCoreApplication::setOrganizationName("Северный мост");
+    QCoreApplication::setApplicationName("URLConnect");
     QApplication a(argc, argv);
     qInstallMessageHandler(Logger::messageHandler);
     qInfo() << "Запуск программы";

@@ -131,8 +131,7 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
 
         ADControlPluginInterface *m_adPlugin = qobject_cast<ADControlPluginInterface*>(plugin.loadPlugin(filePath));
 
-        QString pluginName = QFileInfo(filePath).fileName();
-        pluginName.chop(4);
+        QString pluginName = QFileInfo(filePath).baseName();
         if (!m_adPlugin){
             qWarning() << "Плагин " + pluginName + " не реализует интерфейс ADControlPluginInterface";
             return;

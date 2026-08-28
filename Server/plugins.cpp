@@ -4,7 +4,8 @@
 plugins::plugins(QWidget *parent) :QDialog(parent), ui(new Ui::plugins){
     ui->setupUi(this);
     m_nam = new QNetworkAccessManager(this);
-    pluginList.insert(ui->CheckBox_AD_control, "https://github.com/NorthBridgeKholmsk/URLConnect/raw/refs/heads/dev/Plugins/ADControlPlugin/ADControlPlugin.dll"); //Плагин управление доменами
+    pluginList.insert(ui->CheckBox_AD_control, "https://github.com/NorthBridgeKholmsk/URLConnect/raw/refs/heads/master/Plugins/ADControlPlugin/ADControlPlugin.dll"); //Плагин управление доменами
+    getPluginsFromRegistr();
 }
 
 QObject *plugins::loadPlugin(const QString &pathToPluginFile){
@@ -23,12 +24,17 @@ QObject *plugins::loadPlugin(const QString &pathToPluginFile){
 }
 
 QString plugins::getPluginFilePath(QCheckBox *key){
-    QString filePath;
     QString fileName = QFileInfo(pluginList.value(key)).fileName();
-    QDir dir = QDir::current();
-    dir.cd("plugins");
-    filePath = dir.absoluteFilePath(fileName);
-    return filePath;
+    QString pluginsDirPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins";
+
+    return QDir(pluginsDirPath).absoluteFilePath(fileName);
+}
+
+QString plugins::getPluginFilePath(const QString &url){
+    QString fileName = QFileInfo(url).fileName();
+    QString pluginsDirPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins";
+
+    return QDir(pluginsDirPath).absoluteFilePath(fileName);
 }
 
 plugins::~plugins(){
@@ -39,8 +45,17 @@ void plugins::on_applyButton_clicked(){
     for (auto it = pluginList.begin(); it != pluginList.end(); ++it){
         if (it.key()->checkState()){
            download(it.value());
+           QSettings().setValue("plugins/"+QFileInfo(it.value()).baseName(), true);
+        }
+        else {
+            QString path = getPluginFilePath(it.key());
+            if (QFile(path).exists()){
+                QFile().remove(path);
+            }
+            QSettings().setValue("plugins/"+QFileInfo(it.value()).baseName(), false);
         }
     }
+    this->hide();
 }
 
 
@@ -53,8 +68,8 @@ void plugins::download(const QString &url){
     QNetworkRequest request(url);
     QNetworkReply *reply = m_nam->get(request);
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        handleReply(reply);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
+        handleReply(reply, url);
     });
     connect(reply, &QNetworkReply::downloadProgress,
             this, &plugins::downloadProgress);
@@ -62,10 +77,17 @@ void plugins::download(const QString &url){
 
 void plugins::getPluginsFromRegistr(){
     QSettings settings;
-    ui->CheckBox_AD_control->setChecked(settings.value("plugins/ADcontrol", true).toBool());
+    QList<QCheckBox*>pluginCheckBoxes = this->findChildren<QCheckBox*>();
+    for (QCheckBox* plugin : pluginCheckBoxes){
+        QString pluginPath = QUrl(pluginList.value(plugin)).path();
+        QString pluginName = QFileInfo(pluginPath).baseName();
+        bool check = settings.value("plugins/" + pluginName, false).toBool();
+        plugin->setChecked(check);
+    }
+    //ui->CheckBox_AD_control->setChecked(settings.value("plugins/" + QFileInfo(pluginList.value(ui->CheckBox_AD_control)).baseName(), true).toBool());
 }
 
-void plugins::handleReply(QNetworkReply *reply){
+void plugins::handleReply(QNetworkReply *reply, const QString &url){
     QString filePath;
     bool success = false;
 
@@ -77,11 +99,12 @@ void plugins::handleReply(QNetworkReply *reply){
             fileName = "plugin.dll";  // запасной вариант
         }
 
-        QDir dir = QDir::current();
-        if (!dir.exists("plugins")) {
-            dir.mkdir("plugins");
+        QDir dir = QFileInfo(getPluginFilePath(url)).absolutePath();
+                //QDir::current();
+        if (!QDir(dir).exists()) {
+            QDir().mkpath(dir.absolutePath());
         }
-        dir.cd("plugins");
+        //dir.cd("plugins");
         filePath = dir.absoluteFilePath(fileName);
 
         QFile file(filePath);
