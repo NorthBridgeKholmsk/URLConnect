@@ -30,7 +30,7 @@ PassworkAPI::PassworkAPI(const QString& _apiKey, const QString& _hostname, const
 QJsonObject PassworkAPI::sendResquest(const QString& method, const QMap<QString,QString>& headerList, const bool& isGetRequest, const QString& data){
     QJsonObject result;
     QNetworkAccessManager* manager = new QNetworkAccessManager();
-    QNetworkRequest request(QUrl("https://s-passwd-nb.kholmsk.ru/api/v4"+method));
+    QNetworkRequest request(QUrl("https://passwd.most.lan/api/v4"+method));
     QMapIterator<QString,QString>header(headerList);
     while(header.hasNext()){
         header.next();
