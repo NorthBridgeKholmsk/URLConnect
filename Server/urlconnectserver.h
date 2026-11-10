@@ -34,7 +34,7 @@ private:
     QAction* exitAction;
 
     SettingsWindow* settings = new SettingsWindow();
-    plugins* _plugins = new plugins();
+    Plugins* _plugins = new Plugins();
 
     void checkUpdate(const bool& isManualExec = false);
 };

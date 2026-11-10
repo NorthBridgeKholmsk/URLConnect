@@ -1,11 +1,25 @@
 #include "updater.h"
 
+//Сравнение версий формата "X.Y.Z". Возвращает -1, если a < b; 0, если равны; 1, если a > b
+static int compareVersions(const QString& a, const QString& b){
+    QStringList pa = a.trimmed().split('.');
+    QStringList pb = b.trimmed().split('.');
+    int size = qMax(pa.size(), pb.size());
+    for (int i = 0; i < size; ++i){
+        int va = (i < pa.size()) ? pa[i].toInt() : 0;
+        int vb = (i < pb.size()) ? pb[i].toInt() : 0;
+        if (va != vb) return (va < vb) ? -1 : 1;
+    }
+    return 0;
+}
+
 Updater::Updater(QObject *parent): QObject{parent}, manager(new QNetworkAccessManager){
     latestVersion = getLatestVersionNumber();
 }
 
 bool Updater::isLatestVersion(){
-    return currentVersion == latestVersion;
+    //Считаем, что версия актуальна, если текущая не меньше последней (защита от "обновления" до более старой)
+    return compareVersions(currentVersion, latestVersion) >= 0;
 }
 
 void Updater::downloadLatestVersion(){

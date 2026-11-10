@@ -1,14 +1,15 @@
 #include "plugins.h"
 #include "ui_plugins.h"
 
-plugins::plugins(QWidget *parent) :QDialog(parent), ui(new Ui::plugins){
+Plugins::Plugins(QWidget *parent) :QDialog(parent), ui(new Ui::plugins){
     ui->setupUi(this);
     m_nam = new QNetworkAccessManager(this);
     pluginList.insert(ui->CheckBox_AD_control, "https://github.com/NorthBridgeKholmsk/URLConnect/raw/refs/heads/master/Plugins/ADControlPlugin/ADControlPlugin.dll"); //Плагин управление доменами
+    pluginList.insert(ui->CheckBox_Passwork, "https://github.com/NorthBridgeKholmsk/URLConnect/raw/refs/heads/master/Plugins/PassworkPlugin/PassworkPlugin.dll"); //Плагин получения паролей из Passwork
     getPluginsFromRegistr();
 }
 
-QObject *plugins::loadPlugin(const QString &pathToPluginFile){
+QObject *Plugins::loadPlugin(const QString &pathToPluginFile){
     QPluginLoader loader(pathToPluginFile);
     QObject* plugin = loader.instance();
 
@@ -23,25 +24,30 @@ QObject *plugins::loadPlugin(const QString &pathToPluginFile){
     }
 }
 
-QString plugins::getPluginFilePath(QCheckBox *key){
+QString Plugins::pluginFilePath(const QString &fileName){
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins";
+    return QDir(dir).absoluteFilePath(fileName);
+}
+
+QString Plugins::getPluginFilePath(QCheckBox *key){
     QString fileName = QFileInfo(pluginList.value(key)).fileName();
     QString pluginsDirPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins";
 
     return QDir(pluginsDirPath).absoluteFilePath(fileName);
 }
 
-QString plugins::getPluginFilePath(const QString &url){
+QString Plugins::getPluginFilePath(const QString &url){
     QString fileName = QFileInfo(url).fileName();
     QString pluginsDirPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/plugins";
 
     return QDir(pluginsDirPath).absoluteFilePath(fileName);
 }
 
-plugins::~plugins(){
+Plugins::~Plugins(){
     delete ui;
 }
 
-void plugins::on_applyButton_clicked(){
+void Plugins::on_applyButton_clicked(){
     for (auto it = pluginList.begin(); it != pluginList.end(); ++it){
         if (it.key()->checkState()){
            download(it.value());
@@ -59,12 +65,12 @@ void plugins::on_applyButton_clicked(){
 }
 
 
-void plugins::on_canselButton_clicked(){
+void Plugins::on_canselButton_clicked(){
     qInfo() << "Окно настройки плагинов закрыто без сохранения настроек";
     this->hide();
 }
 
-void plugins::download(const QString &url){
+void Plugins::download(const QString &url){
     QNetworkRequest request(url);
     QNetworkReply *reply = m_nam->get(request);
 
@@ -72,10 +78,10 @@ void plugins::download(const QString &url){
         handleReply(reply, url);
     });
     connect(reply, &QNetworkReply::downloadProgress,
-            this, &plugins::downloadProgress);
+            this, &Plugins::downloadProgress);
 }
 
-void plugins::getPluginsFromRegistr(){
+void Plugins::getPluginsFromRegistr(){
     QSettings settings;
     QList<QCheckBox*>pluginCheckBoxes = this->findChildren<QCheckBox*>();
     for (QCheckBox* plugin : pluginCheckBoxes){
@@ -87,7 +93,7 @@ void plugins::getPluginsFromRegistr(){
     //ui->CheckBox_AD_control->setChecked(settings.value("plugins/" + QFileInfo(pluginList.value(ui->CheckBox_AD_control)).baseName(), true).toBool());
 }
 
-void plugins::handleReply(QNetworkReply *reply, const QString &url){
+void Plugins::handleReply(QNetworkReply *reply, const QString &url){
     QString filePath;
     bool success = false;
 

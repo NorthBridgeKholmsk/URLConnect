@@ -1,5 +1,18 @@
 #include "commandhandler.h"
+#include <QProcess>
+#include <QApplication>
+#include <QRegularExpression>
+#include <QDialog>
+#include "securestorage.h"
+#include "totp.h"
+#include "authmethoddialog.h"
+#include <QUuid>
 
+//Проверка корректности имени хоста/IP (защита от внедрения команд)
+static bool isValidHost(const QString &host){
+    static const QRegularExpression re("^[A-Za-z0-9.\\-:]+$");
+    return !host.isEmpty() && host.size() <= 253 && re.match(host).hasMatch();
+}
 
 CommandHandler::CommandHandler(LocalServer& localserver){
     connect(&localserver, &LocalServer::dataReceived, this, &CommandHandler::runApp);
@@ -8,51 +21,88 @@ CommandHandler::CommandHandler(LocalServer& localserver){
 void CommandHandler::runApp(const QString &host, const QString &protocol, const QString &_hostname){
     qInfo() << "Обработчик команд получил данные для запуска";
 
+    if (!isValidHost(host)){
+        qCritical() << "Некорректное имя хоста, запуск отменён: \"" + host + "\"";
+        return;
+    }
+
     QString hostname = _hostname;
     QString login = "";
     QString pass = "";
-    if (!hostname.isEmpty()){
-        if (protocol == "vnc"){
-            hostname = hostname.split('.')[1];
+
+    const bool isAuthProtocol = (protocol == "ssh") || (protocol == "ciscossh") || (protocol == "winbox");
+
+    if (isAuthProtocol){
+        //Диалог выбора метода аутентификации: ручной ввод / Passwork / RADIUS
+        const bool passworkAvailable = QFile(Plugins::pluginFilePath("PassworkPlugin.dll")).exists();
+        AuthMethodDialog dlg(hostname, passworkAvailable);
+        if (dlg.exec() != QDialog::Accepted){
+            qInfo() << "Выбор метода аутентификации отменён пользователем";
+            return;
         }
-        PassworkAPI psapi(QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray()), hostname, protocol);
-        login = psapi.getLogin();
-        pass = psapi.getPass();
+
+        switch (dlg.method()){
+        case AuthMethodDialog::Manual:
+            login = dlg.login();
+            pass = dlg.password();
+            break;
+        case AuthMethodDialog::Passwork: {
+            //Ключ расшифровывается через DPAPI; при ошибке используется исходное значение
+            QByteArray storedApiKey = QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray());
+            QByteArray plainApiKey = SecureStorage::unprotect(storedApiKey);
+            if (plainApiKey.isEmpty()) plainApiKey = storedApiKey;
+            QString pwHost = dlg.hostname();
+            if (pwHost.isEmpty()) pwHost = hostname; //запасной вариант — имя хоста из URL
+            QApplication::setOverrideCursor(Qt::WaitCursor);
+            bool ok = getPassworkCredentials(plainApiKey, pwHost, protocol, login, pass);
+            QApplication::restoreOverrideCursor();
+            if (!ok){
+                return;
+            }
+            break;
+        }
+        case AuthMethodDialog::Radius:
+            getRadiusCredentials(protocol, login, pass);
+            break;
+        }
     }
-    else{
-        bool need2FACode = false;
-        login = QSettings().value("settings/radiusLogin").toString();
-        if (protocol == "ssh"){
-            login += "-linux";
-            need2FACode = !need2FACode;
+    else if (!hostname.isEmpty()){
+        //Прочие протоколы (например vnc): получение данных из Passwork по имени хоста
+        if (protocol == "vnc"){
+            QStringList vncParts = hostname.split('.');
+            if (vncParts.size() > 1){
+                hostname = vncParts.at(1);
+            }
         }
-        else if ((protocol == "winbox") || (protocol == "old_winbox")){
-            login += "-mk";
-            need2FACode = !need2FACode;
-        }
-        else if (protocol == "ciscossh"){
-            login += "-cisco";
-            need2FACode = !need2FACode;
-        }
-        if (need2FACode){
-            SettingsWindow sw;
-            pass = QInputDialog::getText(sw.topLevelWidget(), "Ввод второго фактора", "Введите второй фактор из аутентификатора", QLineEdit::Normal,QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+        QByteArray storedApiKey = QByteArray::fromBase64(QSettings().value("settings/apiKey").toByteArray());
+        QByteArray plainApiKey = SecureStorage::unprotect(storedApiKey);
+        if (plainApiKey.isEmpty()) plainApiKey = storedApiKey;
+
+        bool ok = getPassworkCredentials(plainApiKey, hostname, protocol, login, pass);
+        QApplication::restoreOverrideCursor();
+        if (!ok){
+            return;
         }
     }
 
-    QString command;
-    if (((protocol == "ssh") || (protocol == "ciscossh")) && exeIsExsists("settings/sshAppPath")){
-        command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
+    QString program;
+    QStringList args;
+    bool launchAsAdmin = false;
+    QString adminCommand;
+    if (((protocol == "ssh") || (protocol == "ciscossh")) && exeExists("settings/sshAppPath")){
+        program = QSettings().value("settings/sshAppPath").toString();
+        const QString sshUseApp = QSettings().value("settings/sshUseApp").toString();
         if (!pass.isEmpty()){
-            if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-                command += " -ssh " + login + "@" + host + " -pw " + pass;
+            if (sshUseApp == "PuTTY"){
+                args << "-ssh" << login + "@" + host << "-pw" << pass;
             }
-            else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
+            else if (sshUseApp == "MobaXterm"){
                 if (protocol == "ciscossh"){
-                    command += " -newtab \"sshpass -p '" + pass + "' ssh -legacy -c aes256-cbc -oKexAlgorithms=+diffie-hellman-group1-sha1 " + login + "@" + host + "\"" ;
+                    args << "-newtab" << ("sshpass -p '" + pass + "' ssh -legacy -c aes256-cbc -oKexAlgorithms=+diffie-hellman-group1-sha1 " + login + "@" + host);
                 }
                 else{
-                    command += " -newtab \"sshpass -p '" + pass + "' ssh " + login + "@" + host + "\"" ;
+                    args << "-newtab" << ("sshpass -p '" + pass + "' ssh " + login + "@" + host);
                 }
             }
             else {
@@ -61,8 +111,8 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
             }
         }
         else{
-            if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-                command += " -ssh " + host;
+            if (sshUseApp == "PuTTY"){
+                args << "-ssh" << host;
             }
             else {
                 qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы или индификатор пароля небыл найден";
@@ -70,54 +120,46 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
             }
         }
     }
-    else if (protocol == "rdp" && exeIsExsists("settings/rdpAppPath")){
-        command = "start /b " + PathShielding(QSettings().value("settings/rdpAppPath").toString());
-        command += " -V:" + host;
+    else if (protocol == "rdp" && exeExists("settings/rdpAppPath")){
+        program = QSettings().value("settings/rdpAppPath").toString();
+        args << "-V:" + host;
     }
-    else if (protocol == "vnc" && exeIsExsists("settings/vncAppPath")){
-        command = "start /b " + PathShielding(QSettings().value("settings/vncAppPath").toString());
+    else if (protocol == "vnc" && exeExists("settings/vncAppPath")){
+        program = QSettings().value("settings/vncAppPath").toString();
         if (!pass.isEmpty()){
-            command += " -host=" + host + " -password=" + pass + "";
+            args << "-host=" + host << "-password=" + pass;
         }
         else{
-            command += " -host=" + host;
+            args << "-host=" + host;
         }
     }
-    else if (protocol == "winbox" && exeIsExsists("settings/winboxNewAppPath")){
-        command = "start /b " + PathShielding(QSettings().value("settings/winboxNewAppPath").toString());
+    else if (protocol == "winbox" && exeExists("settings/winboxNewAppPath")){
+        program = QSettings().value("settings/winboxNewAppPath").toString();
         if (!pass.isEmpty()){
-            command += " " + host + " " + login + " " + pass + "";
+            args << host << login << pass;
         }
         else{
-            command += " " + host + " admin " + hostname;
+            args << host << "admin" << hostname;
         }
     }
-    else if (protocol == "old_winbox" && exeIsExsists("settings/winboxOldAppPath")){
-        command = "start /b " + PathShielding(QSettings().value("settings/winboxOldAppPath").toString());
-        if (!pass.isEmpty()){
-            command += " " + host + " " + login + " " + pass + "";
-        }
-        else{
-            command += " " + host + " admin " + hostname;
-        }
-    }
-    else if (protocol == "ie" && exeIsExsists("settings/ieAppPath")){
-        command = PathShielding(QDir::toNativeSeparators(QCoreApplication::applicationDirPath()) + "\\StartIE.vbs");
-        command += "  http://" + host;
+    else if (protocol == "ie" && exeExists("settings/ieAppPath")){
+        program = "wscript.exe";
+        args << QDir::toNativeSeparators(QCoreApplication::applicationDirPath()) + "\\StartIE.vbs" << "http://" + host;
     }
     else if (protocol == "ping"){
-        command = "start /b cmd /K ping " + host + " -t";
+        launchConsoleCommand("Ping " + host, "ping " + host + " -t");
     }
     else if (protocol == "traceroute"){
-        command = "start /b cmd /K tracert -d " + host;
+        launchConsoleCommand("Traceroute " + host, "tracert -d " + host);
     }
     else if (protocol == "telnet") {
-        command = "start /b " + PathShielding(QSettings().value("settings/sshAppPath").toString());
-        if (QSettings().value("settings/sshUseApp").toString() == "PuTTY"){
-            command += " -telnet " + host;
+        program = QSettings().value("settings/sshAppPath").toString();
+        const QString telnetUseApp = QSettings().value("settings/sshUseApp").toString();
+        if (telnetUseApp == "PuTTY"){
+            args << "-telnet" << host;
         }
-        else if (QSettings().value("settings/sshUseApp").toString() == "MobaXterm"){
-            command += " -newtab \"telnet " + host + "\"";
+        else if (telnetUseApp == "MobaXterm"){
+            args << "-newtab" << ("telnet " + host);
         }
         else {
             qCritical() << "Выбранный SSH клиент не поддерживается данной версией программы";
@@ -126,17 +168,17 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     }
     else if (protocol.startsWith("adctl")){
         SettingsWindow sw;
-        plugins plugin;
-        QString filePath = plugin.getPluginFilePath(plugin.ui->CheckBox_AD_control);
+        QString filePath = Plugins::pluginFilePath("ADControlPlugin.dll");
 
-        ADControlPluginInterface *m_adPlugin = qobject_cast<ADControlPluginInterface*>(plugin.loadPlugin(filePath));
+        QPluginLoader adLoader(filePath);
+        ADControlPluginInterface *m_adPlugin = qobject_cast<ADControlPluginInterface*>(adLoader.instance());
 
-        QString pluginName = QFileInfo(filePath).baseName();
         if (!m_adPlugin){
-            qWarning() << "Плагин " + pluginName + " не реализует интерфейс ADControlPluginInterface";
+            qWarning() << "Плагин не реализует интерфейс ADControlPluginInterface: " + adLoader.errorString();
             return;
         }
-        command = m_adPlugin->adcontrolRunApp(sw, host, protocol);
+        adminCommand = m_adPlugin->adcontrolRunApp(sw, host, protocol);
+        launchAsAdmin = true;
     }
     else {
         qCritical() << "Протокол \"" + protocol + "\" не поддерживается данной версией программы "
@@ -147,28 +189,75 @@ void CommandHandler::runApp(const QString &host, const QString &protocol, const 
     HWND console = GetConsoleWindow();
     if (console)
         ShowWindow(console,SW_SHOW);
-    if (!command.isEmpty()){
-        if (protocol.startsWith("adctl")){
-            runAsAdmin(command);
-            return;
+    if (launchAsAdmin){
+        runAsAdmin(adminCommand);
+    }
+    else if (!program.isEmpty()){
+        qInfo() << "Запуск приложения:" << program << args;
+        if (!QProcess::startDetached(program, args)){
+            qCritical() << "Не удалось запустить приложение: " + program;
         }
-        system(command.toStdString().c_str());
     }
 }
 
-bool CommandHandler::exeIsExsists(const QString& keyReg){
+bool CommandHandler::getPassworkCredentials(const QByteArray& plainApiKey, const QString& hostname,
+                                            const QString& protocol, QString& login, QString& pass){
+    QPluginLoader pwLoader(Plugins::pluginFilePath("PassworkPlugin.dll"));
+    PassworkPluginInterface *pwPlugin = qobject_cast<PassworkPluginInterface*>(pwLoader.instance());
+    if (!pwPlugin){
+        qCritical() << "Плагин Passwork не установлен или не загружен: " + pwLoader.errorString();
+        return false;
+    }
+    bool ok = pwPlugin->getCredentials(QString::fromUtf8(plainApiKey), hostname, protocol, login, pass);
+    if (!ok){
+        qCritical() << "Не удалось получить данные из Passwork";
+        return false;
+    }
+    return true;
+}
+
+void CommandHandler::getRadiusCredentials(const QString& protocol, QString& login, QString& pass){
+    bool need2FACode = false;
+    login = QSettings().value("settings/radiusLogin").toString();
+    if (protocol == "ssh"){
+        login += "-linux";
+        need2FACode = !need2FACode;
+    }
+    else if (protocol == "winbox"){
+        login += "-mk";
+        need2FACode = !need2FACode;
+    }
+    else if (protocol == "ciscossh"){
+        login += "-cisco";
+        need2FACode = !need2FACode;
+    }
+    if (need2FACode){
+        //Пытаемся сгенерировать второй фактор автоматически по ключу TOTP из настроек
+        QByteArray storedTotpSecret = QByteArray::fromBase64(QSettings().value("settings/totpSecret").toByteArray());
+        QByteArray plainTotpSecret = SecureStorage::unprotect(storedTotpSecret);
+        if (plainTotpSecret.isEmpty()) plainTotpSecret = storedTotpSecret; //обратная совместимость с нешифрованными данными
+        pass = TOTP::generate(QString::fromUtf8(plainTotpSecret));
+        if (!pass.isEmpty()){
+            qInfo() << "Второй фактор сгенерирован автоматически по ключу TOTP";
+        }
+        else{
+            //Ключ не задан или некорректен — ручной ввод (предыдущее поведение)
+            SettingsWindow sw;
+            pass = QInputDialog::getText(sw.topLevelWidget(), "Ввод второго фактора", "Введите второй фактор из аутентификатора", QLineEdit::Normal, QString(), nullptr, Qt::WindowStaysOnTopHint);
+        }
+    }
+}
+
+bool CommandHandler::exeExists(const QString& keyReg){
     return QFile(QSettings().value(keyReg).toString()).exists();
 }
 
 QString CommandHandler::PathShielding(const QString &path){
-    QStringList pathList = path.split('\\');
-    for (QString& p : pathList){
-        if (p.contains(' ')){
-            p.insert(0, '"');
-            p.push_back('"');
-        }
+    QString nativePath = QDir::toNativeSeparators(path);
+    if (nativePath.contains(' ')){
+        return "\"" + nativePath + "\"";
     }
-    return pathList.join('\\');
+    return nativePath;
 }
 
 void CommandHandler::runAsAdmin(const QString& command) {
@@ -186,5 +275,31 @@ void CommandHandler::runAsAdmin(const QString& command) {
 
     if (!ShellExecuteEx(&sei)) {
         qCritical() << "Не удалось запустить команду с правами администратора. Пользователь отклонил UAC или ошибка системы.";
+    }
+}
+
+void CommandHandler::launchConsoleCommand(const QString& title, const QString& command){
+    //QProcess::startDetached + cmd /K не удерживает окно консоли при запуске из GUI-приложения
+    //(окно открывается на мгновение и закрывается). Создаём временный .bat и запускаем его через
+    //shell (ShellExecute) с явным cmd /K — так консольное окно надёжно создаётся и остаётся открытым.
+    const QString batPath = QDir::temp().filePath(
+        "urlconnect_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".bat");
+    {
+        QFile f(batPath);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Text)){
+            qCritical() << "Не удалось создать временный файл: " + batPath;
+            return;
+        }
+        QTextStream ts(&f);
+        ts << "@echo off\r\n";
+        ts << "title " << title << "\r\n";
+        ts << command << "\r\n";
+    }
+    const QString params = "/K \"" + QDir::toNativeSeparators(batPath) + "\"";
+    qInfo() << "Запуск консольной команды:" << params;
+    HINSTANCE h = ShellExecuteW(NULL, L"open", L"cmd.exe",
+        reinterpret_cast<const wchar_t*>(params.utf16()), NULL, SW_SHOW);
+    if (reinterpret_cast<INT_PTR>(h) <= 32){
+        qCritical() << "Не удалось запустить команду: " + batPath;
     }
 }

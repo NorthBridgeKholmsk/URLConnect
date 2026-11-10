@@ -37,6 +37,10 @@ void LocalClient::slotReadyRead(){
             qInfo() << "Клиент получил подтвержение от сервера об успешном получении данных";
             QCoreApplication::exit();
         }
+        else if (string == "authFailed"){
+            qCritical() << "Сервер отклонил запрос: неверный токен аутентификации локального пайпа";
+            QCoreApplication::exit(1);
+        }
     }
 }
 
@@ -53,10 +57,13 @@ void LocalClient::slotError(QLocalSocket::LocalSocketError error){
 
 void LocalClient::sendToServer(){
     qInfo() << "Клиент начал передачу данных серверу";
+    //Токен аутентификации создаётся сервером и хранится в реестре текущего пользователя
+    QSettings auth("URLConnect", "PipeAuth");
+    QString token = auth.value("token").toString();
     QByteArray bits;
     QDataStream outputDataStream(&bits, QIODevice::WriteOnly);
     outputDataStream.setVersion(QDataStream::Qt_6_2);
-    outputDataStream << quint16(0) << host << protocol << hostname;
+    outputDataStream << quint16(0) << host << protocol << hostname << token;
 
     outputDataStream.device()->seek(0);
     outputDataStream << quint16(bits.size() - sizeof(quint16));

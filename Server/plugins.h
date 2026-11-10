@@ -16,16 +16,18 @@ namespace Ui {
 class plugins;
 }
 
-class plugins : public QDialog
+class Plugins : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit plugins(QWidget *parent = nullptr);
+    explicit Plugins(QWidget *parent = nullptr);
     QObject* loadPlugin(const QString& pathToPluginFile);
+    //Возвращает путь к файлу плагина в каталоге данных приложения (без создания диалога)
+    static QString pluginFilePath(const QString& fileName);
     QString getPluginFilePath(QCheckBox* key);
     QString getPluginFilePath(const QString &url);
-    ~plugins();
+    ~Plugins();
 
     Ui::plugins *ui;
 

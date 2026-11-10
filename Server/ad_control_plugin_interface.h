@@ -7,7 +7,7 @@
 class ADControlPluginInterface {
 public:
     virtual ~ADControlPluginInterface(){}
-    virtual QString adcontrolRunApp(const QDialog& parrent, const QString &host, const QString &protocol) = 0;
+    virtual QString adcontrolRunApp(const QDialog& parent, const QString &host, const QString &protocol) = 0;
 };
 
 Q_DECLARE_INTERFACE(ADControlPluginInterface, "NorthBridge.ADControlPlugin/0.0.1")

@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QtPlugin>
 //#include <QDialog>
-#include "../URLConnect/Server/settingswindow.h"
+#include "../../Server/settingswindow.h"
 #include <QInputDialog>
-#include "../URLConnect/Server/ad_control_plugin_interface.h"
+#include "../../Server/ad_control_plugin_interface.h"
 #include "windows.h"
 #include <userenv.h>
 
@@ -17,7 +17,7 @@ class ADControlPlugin : public QObject, public ADControlPluginInterface
     Q_INTERFACES(ADControlPluginInterface)
 public:
     explicit ADControlPlugin(QObject *parent = nullptr);
-    QString adcontrolRunApp(const QDialog& parrent, const QString &host, const QString &protocol) override;
+    QString adcontrolRunApp(const QDialog& parent, const QString &host, const QString &protocol) override;
 signals:
 
 };

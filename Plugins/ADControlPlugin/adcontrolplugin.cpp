@@ -6,12 +6,12 @@ ADControlPlugin::ADControlPlugin(QObject *parent)
 
 }
 
-QString ADControlPlugin::adcontrolRunApp(const QDialog& parrent, const QString &host, const QString &protocol){
+QString ADControlPlugin::adcontrolRunApp(const QDialog& parent, const QString &host, const QString &protocol){
     qInfo() << "Обработчик команд плагина ADcontrolPlugin получил данные для запуска";
 
     if (protocol == "adctl-domain"){
-        QString login = QInputDialog::getText(parrent.topLevelWidget(), "Ввод имени пользователя", "Введите имя администратора домена в формате domain\\login", QLineEdit::Normal, QString(), nullptr ,Qt::WindowStaysOnTopHint);
-        //QString pass = QInputDialog::getText(parrent.topLevelWidget(), "Ввод пароля пользователя", "Введите пароль администратора " + login, QLineEdit::Password, QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        QString login = QInputDialog::getText(parent.topLevelWidget(), "Ввод имени пользователя", "Введите имя администратора домена в формате domain\\login", QLineEdit::Normal, QString(), nullptr ,Qt::WindowStaysOnTopHint);
+        //QString pass = QInputDialog::getText(parent.topLevelWidget(), "Ввод пароля пользователя", "Введите пароль администратора " + login, QLineEdit::Password, QString(), nullptr ,Qt::WindowStaysOnTopHint);
         QString domain = login.section('\\', 0, 0);
         QString user = login.section('\\', 1);
 

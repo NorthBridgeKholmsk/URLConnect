@@ -24,6 +24,8 @@ private:
     QLocalSocket* localSocket;
     quint16 nextBlockSize;
     QString host, protocol, idPass;
+    //Токен аутентификации локального пайпа: запросы без совпадающего токена отклоняются
+    QString pipeToken;
 };
 
 #endif // LOCALSERVER_H

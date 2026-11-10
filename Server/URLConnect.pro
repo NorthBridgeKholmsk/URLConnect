@@ -10,29 +10,35 @@ CONFIG += c++17
 
 SOURCES += \
     ../Logger/logger.cpp \
+    authmethoddialog.cpp \
     commandhandler.cpp \
     localserver.cpp \
     logviewer.cpp \
     main.cpp \
-    passworkapi.cpp \
     plugins.cpp \
+    securestorage.cpp \
     settingswindow.cpp \
+    totp.cpp \
     updater.cpp \
     urlconnectserver.cpp
 
 HEADERS += \
     ../Logger/logger.h \
     ad_control_plugin_interface.h \
+    authmethoddialog.h \
     commandhandler.h \
     localserver.h \
     logviewer.h \
-    passworkapi.h \
+    passwork_plugin_interface.h \
     plugins.h \
+    securestorage.h \
     settingswindow.h \
+    totp.h \
     updater.h \
     urlconnectserver.h
 
 FORMS += \
+    authmethoddialog.ui \
     logviewer.ui \
     plugins.ui \
     settingswindow.ui
@@ -46,12 +52,12 @@ RESOURCES += \
     icons.qrc
 
 DEFINES += QT_MESSAGELOGCONTEXT
+#DPAPI (CryptProtectData/CryptUnprotectData) для шифрования чувствительных данных
+LIBS += -lcrypt32
 RC_ICONS = TrayIcon.ico
-VERSION = 1.5.2
+VERSION = 1.6.0
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 QMAKE_TARGET_COMPANY = North Bridge
 QMAKE_TARGET_PRODUCT = URLConnect
 QMAKE_TARGET_DESCRIPTION = Using a URL to launch programs from a browser
 QMAKE_TARGET_COPYRIGHT = North Bridge
-
-DISTFILES +=
