@@ -11,7 +11,7 @@
 #include <QInputDialog>
 #include <cstdlib>
 #include "localserver.h"
-#include "passworkapi.h"
+#include "passwork_plugin_interface.h"
 #include "settingswindow.h"
 #include "ad_control_plugin_interface.h"
 #include "plugins.h"
@@ -28,9 +28,17 @@ public slots:
 
 private:
     void runAsAdmin(const QString& command);
+    //Запуск консольной команды (ping/traceroute) в отдельном окне через shell
+    void launchConsoleCommand(const QString& title, const QString& command);
 
-    bool exeIsExsists(const QString& keyReg);
+    bool exeExists(const QString& keyReg);
     QString PathShielding(const QString& path);
+
+    //Получение учётных данных из плагина Passwork (true при успехе)
+    bool getPassworkCredentials(const QByteArray& plainApiKey, const QString& hostname,
+                                const QString& protocol, QString& login, QString& pass);
+    //Учётные данные RADIUS: radiusLogin + суффикс протокола + TOTP 2FA
+    void getRadiusCredentials(const QString& protocol, QString& login, QString& pass);
 };
 
 #endif // COMMANDHANDLER_H

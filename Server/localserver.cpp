@@ -1,4 +1,19 @@
 #include "localserver.h"
+#include <QUuid>
+#include <QSettings>
+
+//Загружает токен аутентификации локального пайпа; при первом запуске создаёт и сохраняет его в реестре текущего пользователя
+static QString loadOrCreatePipeToken(){
+    QSettings auth("URLConnect", "PipeAuth");
+    QString token = auth.value("token").toString();
+    if (token.isEmpty()){
+        token = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        auth.setValue("token", token);
+        auth.sync();
+        qInfo() << "Создан новый токен аутентификации локального пайпа";
+    }
+    return token;
+}
 
 LocalServer::LocalServer(const QString& id, QObject *parent): QObject{parent}, nextBlockSize(0){
     localServer = new QLocalServer();
@@ -7,6 +22,7 @@ LocalServer::LocalServer(const QString& id, QObject *parent): QObject{parent}, n
         localServer->close();
         return;
     }
+    pipeToken = loadOrCreatePipeToken();
     qInfo() << "Локальный сервер запущен с идентификатором " + id;
     connect(localServer, &QLocalServer::newConnection, this, [&](){
         qInfo() << "Клиент подключился к локальному серверу";
@@ -36,8 +52,14 @@ void LocalServer::slotReadClient(){
             }
             inputDataStream >> nextBlockSize;
         }
-        inputDataStream >> host >> protocol >> idPass;
+        QString receivedToken;
+        inputDataStream >> host >> protocol >> idPass >> receivedToken;
         nextBlockSize = 0;
+        if (receivedToken != pipeToken){
+            qCritical() << "Отклонён запрос с неверным токеном аутентификации локального пайпа";
+            sendToClient(localSocket, "authFailed");
+            return;
+        }
         qInfo() << "Данные от клиента получены";
         sendToClient(localSocket, "msgRcvd1");
         emit dataReceived(host, protocol, idPass);

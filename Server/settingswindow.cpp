@@ -1,5 +1,6 @@
 #include "settingswindow.h"
 #include "ui_settingswindow.h"
+#include "securestorage.h"
 
 SettingsWindow::SettingsWindow(QWidget *parent) :QDialog(parent), ui(new Ui::SettingsWindow){
     ui->setupUi(this);
@@ -14,7 +15,6 @@ SettingsWindow::SettingsWindow(QWidget *parent) :QDialog(parent), ui(new Ui::Set
     connect(ui->rdpFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->rdpAppPath, "Выберите исполняемый файл клиента RDP");});
     connect(ui->vncFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->vncAppPath, "Выберите исполняемый файл клиента VNC");});
     connect(ui->winboxNewFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->winboxNewAppPath, "Выберите исполняемый файл Winbox новой версии");});
-    connect(ui->winboxOldFindButton, &QPushButton::clicked, this, [&](){findExeFile(ui->winboxOldAppPath, "Выберите исполняемый файл Winbox старой версии");});
 }
 
 SettingsWindow::~SettingsWindow(){
@@ -32,9 +32,18 @@ void SettingsWindow::on_cancelButton_clicked(){
 void SettingsWindow::getSettingsFromRegistr(){
     QSettings settings;
     ui->autostartCB->setChecked(settings.value("settings/autostart", true).toBool());
-    ui->apiKey->setText(QByteArray::fromBase64(settings.value("settings/apiKey").toByteArray()));
+    //Ключ хранится зашифрованным через DPAPI; при ошибке расшифровки (данные из версии без шифрования) используется исходное значение
+    QByteArray storedApiKey = QByteArray::fromBase64(settings.value("settings/apiKey").toByteArray());
+    QByteArray plainApiKey = SecureStorage::unprotect(storedApiKey);
+    if (plainApiKey.isEmpty()) plainApiKey = storedApiKey;
+    ui->apiKey->setText(QString::fromUtf8(plainApiKey));
     ui->portLine->setText(settings.value("settings/port", "URLconnectServer").toString());
     ui->radiusLogin->setText(settings.value("settings/radiusLogin", "admin").toString());
+    //Ключ 2FA (TOTP) хранится зашифрованным через DPAPI; при ошибке расшифровки используется исходное значение
+    QByteArray storedTotpSecret = QByteArray::fromBase64(settings.value("settings/totpSecret").toByteArray());
+    QByteArray plainTotpSecret = SecureStorage::unprotect(storedTotpSecret);
+    if (plainTotpSecret.isEmpty()) plainTotpSecret = storedTotpSecret;
+    ui->totpSecret->setText(QString::fromUtf8(plainTotpSecret));
 
     //Если получено название SSH клиента, которого нет в списке, то устанавливается значение по уполчанию - "PuTTY"
     if (ui->sshUseApp->findText(settings.value("settings/sshUseApp").toString())){
@@ -47,7 +56,6 @@ void SettingsWindow::getSettingsFromRegistr(){
     ui->rdpAppPath->setText(settings.value("settings/rdpAppPath", "C:\\Windows\\system32\\mstsc.exe").toString());
     ui->vncAppPath->setText(settings.value("settings/vncAppPath", "C:\\Program Files (x86)\\TightVNC\\tvnviewer.exe").toString());
     ui->winboxNewAppPath->setText(settings.value("settings/winboxNewAppPath", "C:\\bin\\winbox.exe").toString());
-    ui->winboxOldAppPath->setText(settings.value("settings/winboxOldAppPath", "C:\\bin\\winbox_old.exe").toString());
 }
 
 bool SettingsWindow::validatorPath(QLineEdit *line){
@@ -69,7 +77,6 @@ void SettingsWindow::on_saveButton_clicked(){
         ui->rdpAppPath,
         ui->vncAppPath,
         ui->winboxNewAppPath,
-        ui->winboxOldAppPath,
     };
     //Проверка путей к файлам на валидность
     for (QLineEdit* line : lines){
@@ -112,18 +119,21 @@ void SettingsWindow::setSettingsToRegistr(){
     }
     else{
         QSettings autorunSettings("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
-        settings.remove(QCoreApplication::applicationName());
+        autorunSettings.remove(QCoreApplication::applicationName());
+        autorunSettings.sync();
         qWarning() << "Программа удалена из автозагрузки Windows";
     }
-    settings.setValue("settings/apiKey", ui->apiKey->text().toLocal8Bit().toBase64());
+    //Ключ шифруется через DPAPI перед записью в реестр (base64 — только кодирование бинарного блока)
+    settings.setValue("settings/apiKey", SecureStorage::protect(ui->apiKey->text().toUtf8()).toBase64());
     settings.setValue("settings/port", ui->portLine->text());
     settings.setValue("settings/radiusLogin", ui->radiusLogin->text());
+    //Ключ 2FA (TOTP) шифруется через DPAPI перед записью в реестр (base64 — только кодирование бинарного блока)
+    settings.setValue("settings/totpSecret", SecureStorage::protect(ui->totpSecret->text().toUtf8()).toBase64());
     settings.setValue("settings/sshUseApp", ui->sshUseApp->currentText());
     settings.setValue("settings/sshAppPath", ui->sshAppPath->text());
     settings.setValue("settings/rdpAppPath", ui->rdpAppPath->text());
     settings.setValue("settings/vncAppPath", ui->vncAppPath->text());
     settings.setValue("settings/winboxNewAppPath", ui->winboxNewAppPath->text());
-    settings.setValue("settings/winboxOldAppPath", ui->winboxOldAppPath->text());
     qWarning() << "Окно настройки сервера закрыто с сохранением настроек. Настройки записаны в реестр";
 }
 
